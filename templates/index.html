@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Class Management</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body>
+  <main class="container">
+    <h1>Class Management</h1>
+
+    <form id="class-form" action="#" method="post">
+      <div class="grid">
+        <label>
+          <span>Class Name</span>
+          <input type="text" name="name" placeholder="e.g. CSP1123-Mini IT Project" required />
+        </label>
+
+        <label>
+          <span>Day</span>
+          <select name="day" required>
+            <option value="" disabled selected>Select a day</option>
+            <option>Monday</option>
+            <option>Tuesday</option>
+            <option>Wednesday</option>
+            <option>Thursday</option>
+            <option>Friday</option>
+            <option>Saturday</option>
+            <option>Sunday</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Time</span>
+          <input type="time" name="time" required />
+        </label>
+
+        <label>
+          <span>Location</span>
+          <input type="text" name="location" placeholder="e.g. CQCR3003" required />
+        </label>
+      </div>
+
+      <div class="actions">
+        <button type="submit" disabled>Submit</button>
+        <button type="reset" class="secondary">Reset</button>
+      </div>
+    </form>
+
+    <section class="mock">
+      <h2>Preview</h2>
+      <div id="preview">Fill the form to see a preview here.</div>
+    </section>
+  </main>
+
+  <script>
+    const form = document.getElementById('class-form');
+    const preview = document.getElementById('preview');
+
+    form.addEventListener('input', () => {
+      const data = new FormData(form);
+      const name = data.get('name') || '—';
+      const day = data.get('day') || '—';
+      const time = data.get('time') || '—';
+      const location = data.get('location') || '—';
+
+      preview.innerHTML = `
+        <table border="1" cellpadding="8" cellspacing="0">
+          <thead>
+            <tr>
+              <th>Class Name</th>
+              <th>Day</th>
+              <th>Time</th>
+              <th>Location</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>${name}</td>
+              <td>${day}</td>
+              <td>${time}</td>
+              <td>${location}</td>
+            </tr>
+          </tbody>
+        </table>
+      `;
+    });
+  </script>
+</body>
+</html>
