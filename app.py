@@ -44,6 +44,30 @@ def add_class():
     conn.close()
     return redirect(url_for("index"))
 
+@app.route("/edit_class/<int:id>")
+def edit_class(id):
+    conn = sqlite3.connect("database.db")
+    c = conn.cursor()
+    c.execute("SELECT * FROM classes WHERE id=?", (id,))
+    class_data = c.fetchone()
+    conn.close()
+    return render_template("edit.html", class_data=class_data)
+
+@app.route("/update_class/<int:id>", methods=["POST"])
+def update_class(id):
+    name = request.form["name"]
+    day = request.form["day"]
+    time = request.form["time"]
+    location = request.form["location"]
+
+    conn = sqlite3.connect("database.db")
+    c = conn.cursor()
+    c.execute("UPDATE classes SET name=?, day=?, time=?, location=? WHERE id=?",
+              (name, day, time, location, id))
+    conn.commit()
+    conn.close()
+    return redirect(url_for("index"))
+
 @app.route("/delete_class/<int:id>")
 def delete_class(id):
     conn = sqlite3.connect("database.db")
