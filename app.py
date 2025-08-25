@@ -3,7 +3,6 @@ import sqlite3
 
 app = Flask(__name__)
 
-# -------- Database Setup -------- #
 def init_db():
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
@@ -20,8 +19,6 @@ def init_db():
     conn.close()
 
 init_db()
-
-# -------- Routes -------- #
 
 @app.route("/")
 def index():
