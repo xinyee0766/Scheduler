@@ -10,87 +10,98 @@
   <main class="container">
     <h1>Class Management</h1>
 
-    <form id="class-form" action="#" method="post">
-  <div class="grid">
-    <label>
-      <span>Class Name</span>
-      <input type="text" name="name" placeholder="e.g. CSP1123-Mini IT Project" required />
-    </label>
+    <form id="class-form" action="{{ url_for('add_class') }}" method="POST">
+      <div class="grid">
+        <label>
+          <span>Class Name</span>
+          <input type="text" name="name" placeholder="e.g. CSP1123-Mini IT Project" required />
+        </label>
 
-    <label>
-      <span>Day</span>
-      <select name="day" required>
-        <option value="" disabled selected>Select a day</option>
-        <option>Monday</option>
-        <option>Tuesday</option>
-        <option>Wednesday</option>
-        <option>Thursday</option>
-        <option>Friday</option>
-        <option>Saturday</option>
-        <option>Sunday</option>
-      </select>
-    </label>
+        <label>
+          <span>Day</span>
+          <select name="day" required>
+            <option value="" disabled selected>Select a day</option>
+            <option>Monday</option>
+            <option>Tuesday</option>
+            <option>Wednesday</option>
+            <option>Thursday</option>
+            <option>Friday</option>
+            <option>Saturday</option>
+            <option>Sunday</option>
+          </select>
+        </label>
 
-    <label>
-      <span>Time</span>
-      <input type="time" name="time" required />
-    </label>
+        <label>
+          <span>Time</span>
+          <input type="time" name="time" required />
+        </label>
 
-    <label>
-      <span>Location</span>
-      <input type="text" name="location" placeholder="e.g. CQCR3003" required />
-    </label>
+        <label>
+          <span>Location</span>
+          <input type="text" name="location" placeholder="e.g. CQCR3003" required />
+        </label>
 
-    <label>
-      <span>Notes</span>
-      <textarea name="notes" placeholder="Optional notes..."></textarea>
-    </label>
-  </div>
+        <label>
+          <span>Notes</span>
+          <textarea name="notes" placeholder="Optional notes..."></textarea>
+        </label>
+      </div>
 
-  <div class="actions">
-    <button type="submit" disabled>Submit</button>
-    <button type="reset" class="secondary">Reset</button>
-  </div>
-</form>
+      <div class="actions">
+        <button type="submit">Submit</button>
+        <button type="reset" class="secondary">Reset</button>
+      </div>
+    </form>
 
-<section class="mock">
-  <h2>Preview</h2>
-  <div id="preview">Fill the form to see a preview here.</div>
-</section>
+    <section class="mock">
+      <h2>Preview</h2>
+      <div id="preview">Fill the form to see a preview here.</div>
+    </section>
+  </main>
 
-<script>
-  const form = document.getElementById('class-form');
-  const preview = document.getElementById('preview');
+  <script>
+    const form = document.getElementById('class-form');
+    const preview = document.getElementById('preview');
 
-  form.addEventListener('input', () => {
-    const data = new FormData(form);
-    const name = data.get('name') || '—';
-    const day = data.get('day') || '—';
-    const time = data.get('time') || '—';
-    const location = data.get('location') || '—';
-    const notes = data.get('notes') || '—';
+    form.addEventListener('input', () => {
+      const data = new FormData(form);
+      const name = data.get('name') || '—';
+      const day = data.get('day') || '—';
+      const time = data.get('time') || '—';
+      const location = data.get('location') || '—';
+      const notes = data.get('notes') || '—';
 
-    preview.innerHTML = `
-      <table border="1" cellpadding="8" cellspacing="0">
-        <thead>
-          <tr>
-            <th>Class Name</th>
-            <th>Day</th>
-            <th>Time</th>
-            <th>Location</th>
-            <th>Notes</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>${name}</td>
-            <td>${day}</td>
-            <td>${time}</td>
-            <td>${location}</td>
-            <td>${notes}</td>
-          </tr>
-        </tbody>
-      </table>
-    `;
-  });
-</script>
+      preview.innerHTML = `
+        <table border="1" cellpadding="8" cellspacing="0">
+          <thead>
+            <tr>
+              <th>Class Name</th>
+              <th>Day</th>
+              <th>Time</th>
+              <th>Location</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>${name}</td>
+              <td>${day}</td>
+              <td>${time}</td>
+              <td>${location}</td>
+              <td>${notes}</td>
+            </tr>
+          </tbody>
+        </table>
+      `;
+    });
+
+    form.addEventListener('submit', function(event) {
+      const time = form.elements['time'].value;
+      if (!time.match(/^\d{2}:\d{2}$/)) {
+        alert('Please enter a valid time in HH:MM format.');
+        event.preventDefault();
+      }
+    });
+  </script>
+</body>
+</html>
