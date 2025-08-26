@@ -1,30 +1,103 @@
+/* ===== Body & Background ===== */
 body {
   font-family: Arial, sans-serif;
-  background: #FFF2EB;
-  color: #000;
   margin: 0;
   padding: 0;
+  color: #000;
+  background-color: #FFF2EB;
+  background-image: url("Dashboard Background Image.avif");
+  background-repeat: no-repeat;
+  background-size: 900px auto;
+  background-position: center;
+  background-attachment: fixed;
+  transition: background-color 0.3s, color 0.3s;
 }
 
+html[data-theme="dark"] body {
+  background-color: #888;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.5), rgba(255,255,255,0.5)),
+    url("Dashboard Background Image.avif");
+  background-repeat: no-repeat;
+  background-size: 900px auto;
+  background-position: center;
+  background-attachment: fixed;
+  color: #111;
+}
+
+/* ===== Header ===== */
 header {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   padding: 1rem;
-  background: #FFDCDC;
+  background-color: #FFDCDC;
+  color: #000;
+  transition: background-color 0.3s, color 0.3s;
 }
 
+html[data-theme="dark"] header {
+  background-color: #222;
+  color: #fff;
+}
+
+#darkModeToggle {
+  background-color: #ddd;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+html[data-theme="dark"] #darkModeToggle {
+  background-color: #444;
+  color: #fff;
+}
+
+/* ===== Navigation ===== */
 nav {
   display: flex;
-  gap: 10px;
+  justify-content: center;
+  gap: 1rem;
   padding: 0.5rem;
-  background: #FFD6BA;
+  background-color: #FFD6BA;
+  transition: background-color 0.3s, color 0.3s;
 }
 
-.section { display: none; padding: 1rem; }
-.section.active { display: block; }
+html[data-theme="dark"] nav {
+  background-color: #333;
+  color: #fff;
+}
 
-/* Dark mode */
-html[data-theme="dark"] {
-  background: #111;
-  color: #eee;
+.tab-btn {
+  background: #e0e0e0;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+html[data-theme="dark"] .tab-btn {
+  background-color: #444;
+  color: #fff;
+}
+
+.tab-btn.active {
+  background: #ccc;
+}
+
+html[data-theme="dark"] .tab-btn.active {
+  background-color: #666;
+}
+
+/* ===== Sections ===== */
+.section {
+  display: none;
+  padding: 1rem;
+}
+
+.section.active {
+  display: block;
 }

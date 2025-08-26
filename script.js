@@ -1,22 +1,28 @@
-// Dark mode toggle
-const darkBtn = document.getElementById("darkModeToggle");
-darkBtn.addEventListener("click", () => {
-  const html = document.documentElement;
-  html.setAttribute(
-    "data-theme",
-    html.getAttribute("data-theme") === "dark" ? "light" : "dark"
-  );
-});
+document.addEventListener("DOMContentLoaded", () => {
+  // Dark mode toggle
+  const darkBtn = document.getElementById("darkModeToggle");
+  darkBtn.addEventListener("click", () => {
+    const html = document.documentElement;
+    html.setAttribute(
+      "data-theme",
+      html.getAttribute("data-theme") === "dark" ? "light" : "dark"
+    );
+  });
 
-// Tab switching
-const tabs = document.querySelectorAll(".tab-btn");
-const sections = document.querySelectorAll(".section");
+  // Tab switching
+  const tabs = document.querySelectorAll(".tab-btn");
+  const sections = document.querySelectorAll(".section");
 
-tabs.forEach(btn => {
-  btn.addEventListener("click", () => {
-    tabs.forEach(b => b.classList.remove("active"));
-    sections.forEach(s => s.classList.remove("active"));
-    btn.classList.add("active");
-    document.getElementById(btn.dataset.target).classList.add("active");
+  tabs.forEach(btn => {
+    btn.addEventListener("click", () => {
+      // Remove active from all tabs & sections
+      tabs.forEach(b => b.classList.remove("active"));
+      sections.forEach(s => s.classList.remove("active"));
+
+      // Activate clicked tab & its section
+      btn.classList.add("active");
+      const target = document.getElementById(btn.dataset.target);
+      if(target) target.classList.add("active");
+    });
   });
 });
