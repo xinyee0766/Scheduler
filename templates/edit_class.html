@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Edit Class</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body>
+<main class="container">
+  <h1>Edit Class</h1>
+
+  <form id="class-form" action="{{ url_for('edit_class', class_id=class_obj[0]) }}" method="POST">
+    <div class="grid">
+      <label>
+        <span>Class Name</span>
+        <input type="text" name="name" placeholder="e.g. CSP1123-Mini IT Project" 
+               value="{{ class_obj[1] }}" required />
+      </label>
+
+      <label>
+        <span>Day</span>
+        <select name="day" required>
+          {% for d in ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] %}
+          <option value="{{ d }}" {% if class_obj[2] == d %}selected{% endif %}>{{ d }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label>
+        <span>Time</span>
+        <input type="time" name="time" value="{{ class_obj[3] }}" required />
+      </label>
+
+      <label>
+        <span>Location</span>
+        <input type="text" name="location" placeholder="e.g. CQCR3003" 
+               value="{{ class_obj[4] }}" required />
+      </label>
+
+      <label>
+        <span>Notes</span>
+        <textarea name="notes" placeholder="Optional notes...">{{ class_obj[5] }}</textarea>
+      </label>
+    </div>
+
+    <div class="actions">
+      <button type="submit" class="button">Update Class</button>
+      <a href="{{ url_for('index') }}" class="button secondary">Cancel</a>
+    </div>
+  </form>
+</main>
+</body>
+</html>
