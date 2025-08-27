@@ -25,8 +25,9 @@
       {% endif %}
     {% endwith %}
     
+    <!-- Timetable -->
     <div class="timetable">
-      <table>
+      <table border="1" cellpadding="8" cellspacing="0">
         <thead>
           <tr>
             <th>Time</th>
@@ -45,24 +46,25 @@
             <td class="time-header">{{ time_slot }}</td>
             {% for day in ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] %}
             <td>
-              {% for class in classes %}
-                {% if class.day == day and class.time == time_slot %}
+              {% if class_map[day].get(time_slot) %}
                 <div class="class-event">
-                  <div class="class-name">{{ class.name }}</div>
-                  <div class="class-location">{{ class.location }}</div>
-                  {% if class.notes %}
-                  <div class="class-notes">{{ class.notes }}</div>
+                  <div class="class-name">{{ class_map[day][time_slot]['name'] }}</div>
+                  <div class="class-location">{{ class_map[day][time_slot]['location'] }}</div>
+                  <div class="class-time">
+                    {{ class_map[day][time_slot]['start_time'] }} - {{ class_map[day][time_slot]['end_time'] }}
+                  </div>
+                  {% if class_map[day][time_slot]['notes'] %}
+                  <div class="class-notes">{{ class_map[day][time_slot]['notes'] }}</div>
                   {% endif %}
                   <div class="class-actions">
-                    <a href="{{ url_for('edit_class', class_id=class.id) }}">Edit</a>
-                    <form method="POST" action="{{ url_for('delete_class', class_id=class.id) }}" 
+                    <a href="{{ url_for('edit_class', class_id=class_map[day][time_slot]['id']) }}">Edit</a>
+                    <form method="POST" action="{{ url_for('delete_class', class_id=class_map[day][time_slot]['id']) }}"
                           onsubmit="return confirm('Are you sure you want to delete this class?');">
                       <button type="submit" class="link-button">Delete</button>
                     </form>
                   </div>
                 </div>
-                {% endif %}
-              {% endfor %}
+              {% endif %}
             </td>
             {% endfor %}
           </tr>
@@ -70,10 +72,6 @@
         </tbody>
       </table>
     </div>
-    
-    {% if not classes %}
-    <p>No classes scheduled. <a href="{{ url_for('add_class') }}">Add your first class</a>.</p>
-    {% endif %}
   </main>
 </body>
 </html>
