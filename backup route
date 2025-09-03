@@ -1,0 +1,52 @@
+import flask
+
+pip install  flask
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+# 用一个 list 假装数据库
+reminders = []
+next_id = 1
+
+# 添加提醒 (Create)
+@app.route("/reminders", methods=["POST"])
+def add_reminder():
+    global next_id
+    data = request.get_json()
+    reminder = {
+        "id": next_id,
+        "title": data.get("title"),
+        "time": data.get("time")
+    }
+    reminders.append(reminder)
+    next_id += 1
+    return jsonify({"message": "Reminder added", "reminder": reminder})
+
+# 编辑提醒 (Update)
+@app.route("/reminders/<int:reminder_id>", methods=["PUT"])
+def edit_reminder(reminder_id):
+    data = request.get_json()
+    for reminder in reminders:
+        if reminder["id"] == reminder_id:
+            reminder["title"] = data.get("title", reminder["title"])
+            reminder["time"] = data.get("time", reminder["time"])
+            return jsonify({"message": "Reminder updated", "reminder": reminder})
+    return jsonify({"error": "Reminder not found"}), 404
+
+# 删除提醒 (Delete)
+@app.route("/reminders/<int:reminder_id>", methods=["DELETE"])
+def delete_reminder(reminder_id):
+    for reminder in reminders:
+        if reminder["id"] == reminder_id:
+            reminders.remove(reminder)
+            return jsonify({"message": f"Reminder {reminder_id} deleted"})
+    return jsonify({"error": "Reminder not found"}), 404
+
+# 获取所有提醒 (Read)
+@app.route("/reminders", methods=["GET"])
+def get_reminders():
+    return jsonify(reminders)
+
+if __name__ == "__main__":
+    app.run(debug=True)
