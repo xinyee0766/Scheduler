@@ -1,0 +1,106 @@
+/* --- Upload Page Styles --- */
+body {
+  font-family: system-ui, sans-serif;
+  background: #f8fafc;
+  margin: 0;
+  padding: 2rem;
+  color: #333;
+}
+
+header {
+  margin-bottom: 2rem;
+}
+
+header h1 {
+  margin: 0 0 0.5rem 0;
+}
+
+header nav a {
+  color: #2563eb;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+header nav a:hover {
+  text-decoration: underline;
+}
+
+/* Dropzone styled like textbox */
+.dropzone {
+  margin-top: 1rem;
+  padding: 0.8rem 1rem;
+  border: 1.5px solid #ccc;
+  border-radius: 6px;
+  text-align: left;
+  color: #666;
+  font-size: 0.95rem;
+  background-color: #fff;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.dropzone.dragover {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+  background: #f9fbff;
+}
+
+.dropzone p {
+  margin: 0;
+  color: #666;
+}
+
+/* Clickable "browse" text */
+.browse-btn {
+  background: none;
+  border: none;
+  color: #2563eb;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.browse-btn:hover {
+  color: #1e3a8a;
+}
+
+/* Uploaded file list */
+#fileList {
+  margin-top:
+0.8rem;
+  list-style: none;
+  padding: 0;
+}
+
+#fileList li {
+  padding: 6px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  margin-bottom: 5px;
+  font-size: 0.9rem;
+  background: #f9fafb;
+}
+/* File previews */
+#fileList li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.file-preview img {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+}
+
+.file-icon {
+  width: 40px;
+  height: 40px;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
