@@ -1,47 +1,53 @@
-import flask
-
-pip install  flask
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
+# save reminder
 reminders = []
-next_id = 1
 
-@app.route("/reminders", methods=["POST"])
-def add_reminder():
-    global next_id
-    data = request.get_json()
-    reminder = {
-        "id": next_id,
-        "title": data.get("title"),
-        "time": data.get("time")
-    }
-    reminders.append(reminder)
-    next_id += 1
-    return jsonify({"message": "Reminder added", "reminder": reminder})
-
-@app.route("/reminders/<int:reminder_id>", methods=["PUT"])
-def edit_reminder(reminder_id):
-    data = request.get_json()
-    for reminder in reminders:
-        if reminder["id"] == reminder_id:
-            reminder["title"] = data.get("title", reminder["title"])
-            reminder["time"] = data.get("time", reminder["time"])
-            return jsonify({"message": "Reminder updated", "reminder": reminder})
-    return jsonify({"error": "Reminder not found"}), 404
-
-@app.route("/reminders/<int:reminder_id>", methods=["DELETE"])
-def delete_reminder(reminder_id):
-    for reminder in reminders:
-        if reminder["id"] == reminder_id:
-            reminders.remove(reminder)
-            return jsonify({"message": f"Reminder {reminder_id} deleted"})
-    return jsonify({"error": "Reminder not found"}), 404
-
+# get reminder
 @app.route("/reminders", methods=["GET"])
 def get_reminders():
-    return jsonify(reminders)
+    return jsonify(reminders), 200
 
+# add new reminder
+@app.route("/reminders", methods=["POST"])
+def add_reminder():
+    data = request.get_json()
+    required_fields = ["task", "subject", "due"]
+
+    # check the field are complete
+    if all(field in data and data[field] for field in required_fields):
+        reminders.append({
+            "task": data["task"].strip(),
+            "subject": data["subject"].strip(),
+            "due": data["due"]
+        })
+        return jsonify({
+            "message": "add reminder successfully ✅",
+            "reminders": reminders
+        }), 201
+    else:
+        return jsonify({
+            "error": "data incomplete ❌"
+        }), 400
+
+# delete reminder
+@app.route("/reminders/<int:index>", methods=["DELETE"])
+def delete_reminder(index):
+    if 0 <= index < len(reminders):
+        deleted = reminders.pop(index)
+        return jsonify({
+            "message": f"reminder has deleted：{deleted['task']} 🗑️",
+            "reminders": reminders
+        }), 200
+    else:
+        return jsonify({
+            "error": "cannnot find the reminders ❌"
+        }), 404
+
+# launch flask
 if __name__ == "__main__":
     app.run(debug=True)
