@@ -25,14 +25,29 @@ if 'time' in columns:
         )
     ''')
 
-    c.execute('''
-        INSERT INTO classes (id, name, day, start_time, end_time, location, notes)
-        SELECT id, name, day, time, time, location, notes FROM old_classes
-    ''')
+    c.execute("SELECT id, name, day, time, location, notes FROM old_classes")
+    rows = c.fetchall()
+
+    for row in rows:
+        id_, name, day, time_value, location, notes = row
+
+        start_time = time_value
+        end_time = time_value
+
+        if "-" in time_value:
+            parts = time_value.split("-")
+            if len(parts) == 2:
+                start_time = parts[0].strip()
+                end_time = parts[1].strip()
+
+        c.execute('''
+            INSERT INTO classes (id, name, day, start_time, end_time, location, notes)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (id_, name, day, start_time, end_time, location, notes))
 
     c.execute("DROP TABLE old_classes")
 
-    print("Table updated successfully!")
+    print("Table updated successfully! Times were split into start_time and end_time.")
 
 else:
     print("No old 'time' column found. No changes made.")
