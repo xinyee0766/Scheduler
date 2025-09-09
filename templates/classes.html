@@ -3,10 +3,8 @@
 {% block title %}Classes - ByeByeLastMinute{% endblock %}
 
 {% block content %}
-  <main class="container">
     <h1>Class Management</h1>
 
-    <!-- Search Form -->
     <form method="GET" class="search-form">
       <input type="text" name="q" placeholder="Search by class name..." value="{{ search_query or '' }}">
       <button type="submit">Search</button>
@@ -64,7 +62,4 @@
     {% else %}
       <p>No classes found. <a href="{{ url_for('add_class') }}">Add your first class</a>.</p>
     {% endif %}
-  </main>
-</body>
-</html>
 {% endblock %}

@@ -3,7 +3,6 @@
 {% block title %}Add Class - ByeByeLastMinute{% endblock %}
 
 {% block content %}
-  <main class="container">
     <h1>Class Management</h1>
 
     <form id="class-form" action="{{ url_for('add_class') }}" method="POST">
@@ -97,7 +96,6 @@
       `;
     });
 
-    // Optional: basic time validation
     form.addEventListener('submit', function(event) {
       const start_time = form.elements['start_time'].value;
       const end_time = form.elements['end_time'].value;
@@ -107,6 +105,4 @@
       }
     });
   </script>
-</body>
-</html>
 {% endblock %}
