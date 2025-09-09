@@ -1,12 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Edit Class</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-</head>
-<body>
+{% extends "base.html" %}
+
+{% block title %}Edit Class - ByeByeLastMinute{% endblock %}
+
+{% block content %}
 <main class="container">
   <h1>Edit Class</h1>
 
@@ -57,3 +53,4 @@
 </main>
 </body>
 </html>
+{% endblock %}
