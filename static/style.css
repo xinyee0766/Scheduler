@@ -8,7 +8,7 @@ html, body {
   height: 100%;
   font-family: Arial, sans-serif;
   background-color: #FFF2EB;
-  background-image: url("Dashboard Background Image.avif");
+  background-image: url("Dashboard Background Image.jpg"), url("Dashboard Background Image.avif");
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center;
@@ -372,4 +372,16 @@ td strong {
   .time-header {
     width: 60px;
   }
+}
+
+.site-header h1 {
+  font-size: 3rem;       /* bigger font */
+  font-weight: bold;
+  text-align: center;
+  margin: 10px auto;
+  color: #333333;        /* dark grey font */
+  text-shadow: 
+    1px 1px 0 #FFDCDC,
+    2px 2px 0 #FFF2EB,
+    3px 3px 6px #ffc2a1;
 }
