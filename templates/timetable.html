@@ -42,7 +42,7 @@
             {% for day in ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] %}
             <td>
               {% if class_map[day].get(time_slot) %}
-                <div class="class-event">
+                <div class="class-event {{ day|lower }}">
                   <div class="class-name">{{ class_map[day][time_slot]['name'] }}</div>
                   <div class="class-location">{{ class_map[day][time_slot]['location'] }}</div>
                   <div class="class-time">
