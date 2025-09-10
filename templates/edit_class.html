@@ -3,7 +3,6 @@
 {% block title %}Edit Class - ByeByeLastMinute{% endblock %}
 
 {% block content %}
-<main class="container">
   <h1>Edit Class</h1>
 
   <form id="class-form" action="{{ url_for('edit_class', class_id=class_obj['id']) }}" method="POST">
@@ -50,7 +49,4 @@
       <a href="{{ url_for('index') }}" class="button secondary">Cancel</a>
     </div>
   </form>
-</main>
-</body>
-</html>
 {% endblock %}
