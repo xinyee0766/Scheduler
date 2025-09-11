@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Timetable - ByeByeLastMinute{% endblock %}
+{% block title %}Timetable{% endblock %}
 
 {% block content %}
 <h1>My Class Timetable</h1>
@@ -11,7 +11,7 @@
 </div>
 
 <div class="timetable">
-  <table border="1" cellpadding="8" cellspacing="0">
+  <table>
     <thead>
       <tr>
         <th>Time</th>
@@ -32,14 +32,8 @@
             <div class="class-location">{{ c['location'] }}</div>
             <div class="class-time">{{ c['start_time'] }} - {{ c['end_time'] }}</div>
             {% if c['notes'] %}
-              <div class="class-notes">{{ c['notes'] }}</div>
+            <div class="class-notes">{{ c['notes'] }}</div>
             {% endif %}
-            <div class="class-actions">
-              <a href="{{ url_for('edit_class', class_id=c['id']) }}" class="link-button">Edit</a>
-              <form method="POST" action="{{ url_for('delete_class', class_id=c['id']) }}" style="display:inline;">
-                <button type="submit" class="link-button" onclick="return confirm('Are you sure?')">Delete</button>
-              </form>
-            </div>
           </div>
           {% endfor %}
         </td>

@@ -41,7 +41,6 @@ def index():
             classes = conn.execute("SELECT * FROM classes ORDER BY day, start_time").fetchall()
     return render_template("classes.html", classes=classes, search_query=search_query)
 
-# --- Add class ---
 @app.route("/add_class", methods=["GET", "POST"])
 def add_class():
     if request.method == "POST":
@@ -125,25 +124,27 @@ def timetable():
     classes = conn.execute("SELECT * FROM classes").fetchall()
     conn.close()
 
+    # Generate hourly slots
     start = datetime.strptime("08:00", "%H:%M")
-    end = datetime.strptime("20:30", "%H:%M")
+    end = datetime.strptime("20:00", "%H:%M")
     time_slots = []
     while start <= end:
         time_slots.append(start.strftime("%H:%M"))
-        start += timedelta(minutes=30)
+        start += timedelta(hours=1)
 
-    class_map = {day: {slot: [] for slot in time_slots}
-                 for day in ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']}
+    # Build class map for each day and each hourly slot
+    class_map = {day: {slot: [] for slot in time_slots} for day in
+                 ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']}
 
     for c in classes:
         s_time = datetime.strptime(c['start_time'], "%H:%M")
         e_time = datetime.strptime(c['end_time'], "%H:%M")
-        current = s_time
-        while current < e_time:
-            slot = current.strftime("%H:%M")
-            if slot in class_map[c['day']]:
+        for slot in time_slots:
+            slot_start = datetime.strptime(slot, "%H:%M")
+            slot_end = slot_start + timedelta(hours=1)
+            # Include class if it overlaps this hour
+            if s_time < slot_end and e_time > slot_start:
                 class_map[c['day']][slot].append(c)
-            current += timedelta(minutes=30)
 
     return render_template('timetable.html',
                            time_slots=time_slots,
