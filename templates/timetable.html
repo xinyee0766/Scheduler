@@ -3,47 +3,53 @@
 {% block content %}
 <h2>Weekly Timetable</h2>
 
-<div class="timetable">
-  <table>
-    <thead>
-      <tr>
-        <th class="time-header">Time</th>
-        {% for day in ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] %}
-          <th>{{ day }}</th>
-        {% endfor %}
-      </tr>
-    </thead>
-    <tbody>
-      {% for time_slot in time_slots %}
-        <tr>
-          <td class="time-header">{{ time_slot }}</td>
-          {% for day in ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] %}
-            <td>
-              {% for class_obj in class_map[day][time_slot] %}
-                {# Calculate percentage for partial-hour display if needed #}
-                {% set start = class_obj.start_time %}
-                {% set end = class_obj.end_time %}
-                {% set slot_time = time_slot %}
-                {% set start_dt = start[:5] %}
-                {% set end_dt = end[:5] %}
+<div class="actions">
+    <a href="{{ url_for('add_class') }}" class="button">Add New Class</a>
+    <a href="{{ url_for('index') }}" class="button secondary">View as List</a>
+</div>
 
-                <div class="class-event {{ day|lower }}" style="height:100%;">
-                  <div class="class-name">{{ class_obj.name }}</div>
-                  <div class="class-location">{{ class_obj.location }}</div>
-                  <div class="class-notes">{{ class_obj.notes }}</div>
-                  <div class="class-actions">
-                    <a href="{{ url_for('edit_class', class_id=class_obj.id) }}">Edit</a>
-                    <form action="{{ url_for('delete_class', class_id=class_obj.id) }}" method="post" style="display:inline;">
-                      <button type="submit">Delete</button>
-                    </form>
-                  </div>
-                </div>
-              {% endfor %}
-            </td>
-          {% endfor %}
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+<div class="timetable">
+    <table>
+        <thead>
+            <tr>
+                <th>Time</th>
+                <th>Monday</th>
+                <th>Tuesday</th>
+                <th>Wednesday</th>
+                <th>Thursday</th>
+                <th>Friday</th>
+                <th>Saturday</th>
+                <th>Sunday</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for slot in time_slots %}
+            <tr>
+                <td class="time-header">{{ slot }}</td>
+                {% for day in ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] %}
+                <td>
+                    {% for c in class_map[day][slot] %}
+                        <div class="class-event {{ day|lower }}">
+                            <div class="class-name">{{ c.name }}</div>
+                            <div class="class-location">{{ c.location }}</div>
+                            <div class="class-time">{{ c.start_time }} - {{ c.end_time }}</div>
+                            {% if c.notes %}
+                            <div class="class-notes">{{ c.notes }}</div>
+                            {% endif %}
+                            <div class="class-actions" style="position: relative;">
+                                <a href="{{ url_for('edit_class', class_id=c.id) }}" style="margin-right: 10px;">Edit</a> |
+                                <form action="{{ url_for('delete_class', class_id=c.id) }}" method="POST" style="display:inline; position: relative; top: -2px;">
+                                    <button type="submit" onclick="return confirm('Are you sure?')" 
+                                        style="background:none;border:none;color:#fff;text-decoration:underline;cursor:pointer;font: size 0.8rem;padding:0;margin: 0;" onclick="return confirm('Are you sure?')">Delete</button>
+                                </form>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
 {% endblock %}
