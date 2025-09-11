@@ -7,7 +7,7 @@ DB_NAME = "database.db"
 
 def get_db_connection():
     """Return a DB connection that returns rows as dict-like objects"""
-    conn = sqlite3.connect(DB_NAME, timeout=10)  # wait 10s if DB is locked
+    conn = sqlite3.connect(DB_NAME, timeout=10)  
     conn.row_factory = sqlite3.Row
     return conn
 

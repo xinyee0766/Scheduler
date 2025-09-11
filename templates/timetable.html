@@ -42,18 +42,17 @@
             {% for day in ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] %}
             <td>
               {% if class_map[day].get(time_slot) %}
-                <div class="class-event">
-                  <div class="class-name">{{ class_map[day][time_slot]['name'] }}</div>
-                  <div class="class-location">{{ class_map[day][time_slot]['location'] }}</div>
-                  <div class="class-time">
-                    {{ class_map[day][time_slot]['start_time'] }} - {{ class_map[day][time_slot]['end_time'] }}
-                  </div>
-                  {% if class_map[day][time_slot]['notes'] %}
-                  <div class="class-notes">{{ class_map[day][time_slot]['notes'] }}</div>
+                {% set c = class_map[day][time_slot] %}
+                <div class="class-event {{ c['day']|lower }}">
+                  <div class="class-name">{{ c['name'] }}</div>
+                  <div class="class-location">{{ c['location'] }}</div>
+                  <div class="class-time">{{ c['start_time'] }} - {{ c['end_time'] }}</div>
+                  {% if c['notes'] %}
+                    <div class="class-notes">{{ c['notes'] }}</div>
                   {% endif %}
                   <div class="class-actions">
-                    <a href="{{ url_for('edit_class', class_id=class_map[day][time_slot]['id']) }}">Edit</a>
-                    <form method="POST" action="{{ url_for('delete_class', class_id=class_map[day][time_slot]['id']) }}"
+                    <a href="{{ url_for('edit_class', class_id=c['id']) }}">Edit</a>
+                    <form method="POST" action="{{ url_for('delete_class', class_id=c['id']) }}"
                           onsubmit="return confirm('Are you sure you want to delete this class?');">
                       <button type="submit" class="link-button">Delete</button>
                     </form>

@@ -375,13 +375,21 @@ td strong {
 }
 
 .site-header h1 {
-  font-size: 3rem;       /* bigger font */
+  font-size: 3rem;   
   font-weight: bold;
   text-align: center;
   margin: 10px auto;
-  color: #333333;        /* dark grey font */
+  color: #333333;      
   text-shadow: 
     1px 1px 0 #FFDCDC,
     2px 2px 0 #FFF2EB,
     3px 3px 6px #ffc2a1;
 }
+
+.class-event.monday    { background-color: #4CAF50; }   
+.class-event.tuesday   { background-color: #2196F3; }  
+.class-event.wednesday { background-color: #9C27B0; }  
+.class-event.thursday  { background-color: #FF9800; }  
+.class-event.friday    { background-color: #F44336; }   
+.class-event.saturday  { background-color: #795548; }  
+.class-event.sunday    { background-color: #607D8B; }   
