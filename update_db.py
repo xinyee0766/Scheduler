@@ -13,8 +13,10 @@ def migrate_old_time_column(conn):
     if 'time' in columns:
         print("Old 'time' column detected. Migrating data...")
 
+        # Rename old table
         c.execute("ALTER TABLE classes RENAME TO old_classes")
 
+        # Create new table
         c.execute('''
             CREATE TABLE classes (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -27,37 +29,21 @@ def migrate_old_time_column(conn):
             )
         ''')
 
-        old_rows = c.execute("SELECT id, name, day, time, location, notes FROM old_classes").fetchall()
+        # Copy data from old table
+        c.execute('''
+            INSERT INTO classes (id, name, day, start_time, end_time, location, notes)
+            SELECT id, name, day, time, time, location, notes FROM old_classes
+        ''')
 
-        for row in old_rows:
-            id_, name, day, time_range, location, notes = row
-            if "-" in time_range:
-                start_time, end_time = [t.strip() for t in time_range.split("-", 1)]
-            else:
-                start_time = end_time = time_range.strip()
-            c.execute('''
-                INSERT INTO classes (id, name, day, start_time, end_time, location, notes)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            ''', (id_, name, day, start_time, end_time, location, notes))
-
+        # Drop old table
         c.execute("DROP TABLE old_classes")
-        print("✅ Migration completed successfully!")
+        print("Table updated successfully!")
     else:
-        print("ℹ️ No old 'time' column found. No migration needed.")
-
-
-def update_db():
-    """Initialize DB, migrate old data, add sample classes."""
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-
-    init_db()
-
-    migrate_old_time_column(conn)
+        print("No old 'time' column found. No changes made.")
 
     conn.commit()
-    conn.close()
 
+def add_sample_classes():
     if not Class.get_all():
         print("Adding sample classes for testing...")
         sample_classes = [
@@ -69,6 +55,12 @@ def update_db():
             c.save()
         print(f"✅ Added {len(sample_classes)} sample classes.")
 
+def update_db():
+    init_db()
+    conn = sqlite3.connect(DB_NAME)
+    migrate_old_time_column(conn)
+    conn.close()
+    add_sample_classes()
 
 if __name__ == "__main__":
     update_db()

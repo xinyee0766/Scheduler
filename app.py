@@ -124,7 +124,7 @@ def timetable():
     classes = conn.execute("SELECT * FROM classes").fetchall()
     conn.close()
 
-    # Generate hourly slots
+    # Hourly slots
     start = datetime.strptime("08:00", "%H:%M")
     end = datetime.strptime("20:00", "%H:%M")
     time_slots = []
@@ -132,7 +132,7 @@ def timetable():
         time_slots.append(start.strftime("%H:%M"))
         start += timedelta(hours=1)
 
-    # Build class map for each day and each hourly slot
+    # Build class map
     class_map = {day: {slot: [] for slot in time_slots} for day in
                  ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']}
 
@@ -142,13 +142,20 @@ def timetable():
         for slot in time_slots:
             slot_start = datetime.strptime(slot, "%H:%M")
             slot_end = slot_start + timedelta(hours=1)
-            # Include class if it overlaps this hour
             if s_time < slot_end and e_time > slot_start:
-                class_map[c['day']][slot].append(c)
+                class_map[c['day']][slot].append({
+                    'id': c['id'],
+                    'name': c['name'],
+                    'start_time': c['start_time'],
+                    'end_time': c['end_time'],
+                    'location': c['location'],
+                    'notes': c['notes']
+                })
 
     return render_template('timetable.html',
                            time_slots=time_slots,
                            class_map=class_map)
+
 
 if __name__ == "__main__":
     app.run(debug=True)

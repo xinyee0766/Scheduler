@@ -3,7 +3,8 @@
 {% block title %}Add Class - ByeByeLastMinute{% endblock %}
 
 {% block content %}
-<h1>Class Management</h1>
+  <main class="container">
+    <h1>Class Management</h1>
 
 <form id="class-form" action="{{ url_for('add_class') }}" method="POST">
   <div class="grid">
@@ -95,13 +96,16 @@ form.addEventListener('input', () => {
   `;
 });
 
-form.addEventListener('submit', function(event) {
-  const start_time = form.elements['start_time'].value;
-  const end_time = form.elements['end_time'].value;
-  if (!start_time || !end_time) {
-    alert('Please enter valid start and end times.');
-    event.preventDefault();
-  }
-});
-</script>
+    // Optional: basic time validation
+    form.addEventListener('submit', function(event) {
+      const start_time = form.elements['start_time'].value;
+      const end_time = form.elements['end_time'].value;
+      if (!start_time || !end_time) {
+        alert('Please enter valid start and end times.');
+        event.preventDefault();
+      }
+    });
+  </script>
+</body>
+</html>
 {% endblock %}

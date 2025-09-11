@@ -3,7 +3,8 @@
 {% block title %}Edit Class - ByeByeLastMinute{% endblock %}
 
 {% block content %}
-<h1>Edit Class</h1>
+<main class="container">
+  <h1>Edit Class</h1>
 
 <form id="class-form" method="POST">
   <div class="grid">
@@ -21,21 +22,12 @@
     <label>Notes<textarea name="notes">{{ class_obj['notes'] or '' }}</textarea></label>
   </div>
 
-  <div class="actions">
-    <button type="submit">Update</button>
-    <a href="{{ url_for('index') }}" class="button secondary">Cancel</a>
-  </div>
-</form>
-
-<script>
-const form2 = document.getElementById('class-form');
-form2.addEventListener('submit', function(event){
-  const start = form2.elements['start_time'].value;
-  const end = form2.elements['end_time'].value;
-  if (!start || !end || start >= end) {
-    alert('Start time must be earlier than end time.');
-    event.preventDefault();
-  }
-});
-</script>
+    <div class="actions">
+      <button type="submit" class="button">Update Class</button>
+      <a href="{{ url_for('index') }}" class="button secondary">Cancel</a>
+    </div>
+  </form>
+</main>
+</body>
+</html>
 {% endblock %}
