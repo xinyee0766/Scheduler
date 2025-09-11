@@ -3,8 +3,10 @@
 {% block title %}Classes - ByeByeLastMinute{% endblock %}
 
 {% block content %}
+  <main class="container">
     <h1>Class Management</h1>
 
+    <!-- Search Form -->
     <form method="GET" class="search-form">
       <input type="text" name="q" placeholder="Search by class name..." value="{{ search_query or '' }}">
       <button type="submit">Search</button>
@@ -13,20 +15,10 @@
       {% endif %}
     </form>
 
-    <div class="actions">
-      <a href="{{ url_for('add_class') }}" class="button">Add New Class</a>
-      <a href="{{ url_for('timetable') }}" class="button secondary">View Timetable</a>
-    </div>
-
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <div class="flash-messages">
-          {% for category, message in messages %}
-            <div class="flash {{ category }}">{{ message }}</div>
-          {% endfor %}
-        </div>
-      {% endif %}
-    {% endwith %}
+<div class="actions">
+  <a href="{{ url_for('add_class') }}" class="button">Add New Class</a>
+  <a href="{{ url_for('timetable') }}" class="button secondary">View Timetable</a>
+</div>
 
     {% if classes %}
       <table border="1" cellpadding="8" cellspacing="0">
@@ -62,4 +54,7 @@
     {% else %}
       <p>No classes found. <a href="{{ url_for('add_class') }}">Add your first class</a>.</p>
     {% endif %}
+  </main>
+</body>
+</html>
 {% endblock %}

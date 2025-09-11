@@ -1,70 +1,49 @@
 {% extends "base.html" %}
 
-{% block title %}Timetable - ByeByeLastMinute{% endblock %}
-
 {% block content %}
-    <h1>My Class Timetable</h1>
-    
-    <div class="actions">
-      <a href="{{ url_for('add_class') }}" class="button">Add New Class</a>
-      <a href="{{ url_for('index') }}" class="button secondary">View as List</a>
-    </div>
-    
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <div class="flash-messages">
-          {% for category, message in messages %}
-            <div class="flash {{ category }}">{{ message }}</div>
-          {% endfor %}
-        </div>
-      {% endif %}
-    {% endwith %}
-    
-    <!-- Timetable -->
-    <div class="timetable">
-      <table border="1" cellpadding="8" cellspacing="0">
-        <thead>
-          <tr>
-            <th>Time</th>
-            <th>Monday</th>
-            <th>Tuesday</th>
-            <th>Wednesday</th>
-            <th>Thursday</th>
-            <th>Friday</th>
-            <th>Saturday</th>
-            <th>Sunday</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for time_slot in time_slots %}
-          <tr>
-            <td class="time-header">{{ time_slot }}</td>
-            {% for day in ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] %}
+<h2>Weekly Timetable</h2>
+
+<div class="timetable">
+  <table>
+    <thead>
+      <tr>
+        <th class="time-header">Time</th>
+        {% for day in ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] %}
+          <th>{{ day }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for time_slot in time_slots %}
+        <tr>
+          <td class="time-header">{{ time_slot }}</td>
+          {% for day in ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] %}
             <td>
-              {% if class_map[day].get(time_slot) %}
-                <div class="class-event {{ day|lower }}">
-                  <div class="class-name">{{ class_map[day][time_slot]['name'] }}</div>
-                  <div class="class-location">{{ class_map[day][time_slot]['location'] }}</div>
-                  <div class="class-time">
-                    {{ class_map[day][time_slot]['start_time'] }} - {{ class_map[day][time_slot]['end_time'] }}
-                  </div>
-                  {% if class_map[day][time_slot]['notes'] %}
-                  <div class="class-notes">{{ class_map[day][time_slot]['notes'] }}</div>
-                  {% endif %}
+              {% for class_obj in class_map[day][time_slot] %}
+                {# Calculate percentage for partial-hour display if needed #}
+                {% set start = class_obj.start_time %}
+                {% set end = class_obj.end_time %}
+                {% set slot_time = time_slot %}
+                {% set start_dt = start[:5] %}
+                {% set end_dt = end[:5] %}
+
+                <div class="class-event {{ day|lower }}" style="height:100%;">
+                  <div class="class-name">{{ class_obj.name }}</div>
+                  <div class="class-location">{{ class_obj.location }}</div>
+                  <div class="class-notes">{{ class_obj.notes }}</div>
                   <div class="class-actions">
-                    <a href="{{ url_for('edit_class', class_id=class_map[day][time_slot]['id']) }}">Edit</a>
-                    <form method="POST" action="{{ url_for('delete_class', class_id=class_map[day][time_slot]['id']) }}"
-                          onsubmit="return confirm('Are you sure you want to delete this class?');">
-                      <button type="submit" class="link-button">Delete</button>
+                    <a href="{{ url_for('edit_class', class_id=class_obj.id) }}">Edit</a>
+                    <form action="{{ url_for('delete_class', class_id=class_obj.id) }}" method="post" style="display:inline;">
+                      <button type="submit">Delete</button>
                     </form>
                   </div>
                 </div>
-              {% endif %}
+              {% endfor %}
             </td>
-            {% endfor %}
-          </tr>
           {% endfor %}
-        </tbody>
-      </table>
-    </div>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
 {% endblock %}
