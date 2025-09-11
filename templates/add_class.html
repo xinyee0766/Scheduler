@@ -3,107 +3,106 @@
 {% block title %}Add Class - ByeByeLastMinute{% endblock %}
 
 {% block content %}
-    <h1>Class Management</h1>
+<h1>Class Management</h1>
 
-    <form id="class-form" action="{{ url_for('add_class') }}" method="POST">
-      <div class="grid">
-        <label>
-          <span>Class Name</span>
-          <input type="text" name="name" placeholder="e.g. CSP1123-Mini IT Project" required />
-        </label>
+<form id="class-form" action="{{ url_for('add_class') }}" method="POST">
+  <div class="grid">
+    <label>
+      <span>Class Name</span>
+      <input type="text" name="name" placeholder="e.g. CSP1123-Mini IT Project" required />
+    </label>
 
-        <label>
-          <span>Day</span>
-          <select name="day" required>
-            <option value="" disabled selected>Select a day</option>
-            <option>Monday</option>
-            <option>Tuesday</option>
-            <option>Wednesday</option>
-            <option>Thursday</option>
-            <option>Friday</option>
-            <option>Saturday</option>
-            <option>Sunday</option>
-          </select>
-        </label>
+    <label>
+      <span>Day</span>
+      <select name="day" required>
+        <option value="" disabled selected>Select a day</option>
+        <option>Monday</option>
+        <option>Tuesday</option>
+        <option>Wednesday</option>
+        <option>Thursday</option>
+        <option>Friday</option>
+        <option>Saturday</option>
+        <option>Sunday</option>
+      </select>
+    </label>
 
-        <label>
-          <span>Start Time</span>
-          <input type="time" name="start_time" required />
-        </label>
+    <label>
+      <span>Start Time</span>
+      <input type="time" name="start_time" required />
+    </label>
 
-        <label>
-          <span>End Time</span>
-          <input type="time" name="end_time" required />
-        </label>
+    <label>
+      <span>End Time</span>
+      <input type="time" name="end_time" required />
+    </label>
 
-        <label>
-          <span>Location</span>
-          <input type="text" name="location" placeholder="e.g. CQCR3003" required />
-        </label>
+    <label>
+      <span>Location</span>
+      <input type="text" name="location" placeholder="e.g. CQCR3003" required />
+    </label>
 
-        <label>
-          <span>Notes</span>
-          <textarea name="notes" placeholder="Optional notes..."></textarea>
-        </label>
-      </div>
+    <label>
+      <span>Notes</span>
+      <textarea name="notes" placeholder="Optional notes..."></textarea>
+    </label>
+  </div>
 
-      <div class="actions">
-        <button type="submit">Submit</button>
-        <button type="reset" class="secondary">Reset</button>
-      </div>
-    </form>
+  <div class="actions">
+    <button type="submit">Submit</button>
+    <button type="reset" class="secondary">Reset</button>
+  </div>
+</form>
 
-    <section class="mock">
-      <h2>Preview</h2>
-      <div id="preview">Fill the form to see a preview here.</div>
-    </section>
-  </main>
+<!-- Live Preview -->
+<section class="mock">
+  <h2>Preview</h2>
+  <div id="preview">Fill the form to see a preview here.</div>
+</section>
 
-  <script>
-    const form = document.getElementById('class-form');
-    const preview = document.getElementById('preview');
+<script>
+const form = document.getElementById('class-form');
+const preview = document.getElementById('preview');
 
-    form.addEventListener('input', () => {
-      const data = new FormData(form);
-      const name = data.get('name') || '—';
-      const day = data.get('day') || '—';
-      const start_time = data.get('start_time') || '—';
-      const end_time = data.get('end_time') || '—';
-      const location = data.get('location') || '—';
-      const notes = data.get('notes') || '—';
+form.addEventListener('input', () => {
+  const data = new FormData(form);
+  const name = data.get('name') || '—';
+  const day = data.get('day') || '—';
+  const start_time = data.get('start_time') || '—';
+  const end_time = data.get('end_time') || '—';
+  const location = data.get('location') || '—';
+  const notes = data.get('notes') || '—';
 
-      preview.innerHTML = `
-        <table border="1" cellpadding="8" cellspacing="0">
-          <thead>
-            <tr>
-              <th>Class Name</th>
-              <th>Day</th>
-              <th>Time</th>
-              <th>Location</th>
-              <th>Notes</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>${name}</td>
-              <td>${day}</td>
-              <td>${start_time} - ${end_time}</td>
-              <td>${location}</td>
-              <td>${notes}</td>
-            </tr>
-          </tbody>
-        </table>
-      `;
-    });
+  preview.innerHTML = `
+    <table border="1" cellpadding="8" cellspacing="0">
+      <thead>
+        <tr>
+          <th>Class Name</th>
+          <th>Day</th>
+          <th>Time</th>
+          <th>Location</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>${name}</td>
+          <td>${day}</td>
+          <td>${start_time} - ${end_time}</td>
+          <td>${location}</td>
+          <td>${notes}</td>
+        </tr>
+      </tbody>
+    </table>
+  `;
+});
 
-    // Optional: basic time validation
-    form.addEventListener('submit', function(event) {
-      const start_time = form.elements['start_time'].value;
-      const end_time = form.elements['end_time'].value;
-      if (!start_time || !end_time) {
-        alert('Please enter valid start and end times.');
-        event.preventDefault();
-      }
-    });
-  </script>
+form.addEventListener('submit', function(event) {
+  const start_time = form.elements['start_time'].value;
+  const end_time = form.elements['end_time'].value;
+  if (!start_time || !end_time) {
+    alert('Please enter valid start and end times.');
+    event.preventDefault();
+  }
+});
+</script>
 {% endblock %}

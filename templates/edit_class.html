@@ -3,50 +3,39 @@
 {% block title %}Edit Class - ByeByeLastMinute{% endblock %}
 
 {% block content %}
-  <h1>Edit Class</h1>
+<h1>Edit Class</h1>
 
-  <form id="class-form" action="{{ url_for('edit_class', class_id=class_obj['id']) }}" method="POST">
-    <div class="grid">
-      <label>
-        <span>Class Name</span>
-        <input type="text" name="name" placeholder="e.g. CSP1123-Mini IT Project" 
-               value="{{ class_obj['name'] }}" required />
-      </label>
+<form id="class-form" method="POST">
+  <div class="grid">
+    <label>Name<input type="text" name="name" value="{{ class_obj['name'] }}" required></label>
+    <label>Day
+      <select name="day" required>
+        {% for d in ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] %}
+          <option value="{{ d }}" {% if class_obj['day']==d %}selected{% endif %}>{{ d }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Start Time<input type="time" name="start_time" value="{{ class_obj['start_time'] }}" required></label>
+    <label>End Time<input type="time" name="end_time" value="{{ class_obj['end_time'] }}" required></label>
+    <label>Location<input type="text" name="location" value="{{ class_obj['location'] }}" required></label>
+    <label>Notes<textarea name="notes">{{ class_obj['notes'] or '' }}</textarea></label>
+  </div>
 
-      <label>
-        <span>Day</span>
-        <select name="day" required>
-          {% for d in ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] %}
-          <option value="{{ d }}" {% if class_obj['day'] == d %}selected{% endif %}>{{ d }}</option>
-          {% endfor %}
-        </select>
-      </label>
+  <div class="actions">
+    <button type="submit">Update</button>
+    <a href="{{ url_for('index') }}" class="button secondary">Cancel</a>
+  </div>
+</form>
 
-      <label>
-        <span>Start Time</span>
-        <input type="time" name="start_time" value="{{ class_obj['start_time'] }}" required />
-      </label>
-
-      <label>
-        <span>End Time</span>
-        <input type="time" name="end_time" value="{{ class_obj['end_time'] }}" required />
-      </label>
-
-      <label>
-        <span>Location</span>
-        <input type="text" name="location" placeholder="e.g. CQCR3003" 
-               value="{{ class_obj['location'] }}" required />
-      </label>
-
-      <label>
-        <span>Notes</span>
-        <textarea name="notes" placeholder="Optional notes...">{{ class_obj['notes'] }}</textarea>
-      </label>
-    </div>
-
-    <div class="actions">
-      <button type="submit" class="button">Update Class</button>
-      <a href="{{ url_for('index') }}" class="button secondary">Cancel</a>
-    </div>
-  </form>
+<script>
+const form2 = document.getElementById('class-form');
+form2.addEventListener('submit', function(event){
+  const start = form2.elements['start_time'].value;
+  const end = form2.elements['end_time'].value;
+  if (!start || !end || start >= end) {
+    alert('Start time must be earlier than end time.');
+    event.preventDefault();
+  }
+});
+</script>
 {% endblock %}
