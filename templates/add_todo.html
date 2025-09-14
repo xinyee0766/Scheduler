@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Add Todo - ByeByeLastMinute{% endblock %}
+
+{% block content %}
+<main class="container">
+  <h1>To-Do List</h1>
+
+  <form id="todo-form" method="POST" action="{{ url_for('add_todo') }}">
+    <div class="grid">
+      <label>
+        <span>Task</span>
+        <input type="text" name="task" placeholder="e.g. Finish CSP1123 project" required />
+      </label>
+
+      <label>
+        <span>Due Date</span>
+        <input type="date" name="due_date" required />
+      </label>
+    </div>
+
+    <div class="actions">
+      <button type="submit">Submit</button>
+      <button type="reset" class="secondary">Reset</button>
+    </div>
+  </form>
+
+  <section class="mock">
+    <h2>Preview</h2>
+    <div id="preview">Fill the form to see a preview here.</div>
+  </section>
+</main>
+
+<script>
+const form = document.getElementById('todo-form');
+const preview = document.getElementById('preview');
+
+form.addEventListener('input', () => {
+  const data = new FormData(form);
+  const task = data.get('task') || '—';
+  const due_date = data.get('due_date') || '—';
+
+  preview.innerHTML = `
+    <table border="1" cellpadding="8" cellspacing="0" class="styled-table">
+      <thead>
+        <tr>
+          <th>Task</th>
+          <th>Due Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>${task}</td>
+          <td>${due_date}</td>
+        </tr>
+      </tbody>
+    </table>
+  `;
+});
+</script>
+{% endblock %}
