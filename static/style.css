@@ -268,22 +268,22 @@ td strong {
   color: #ff8c66;
 }
 
+/* === TIMETABLE (adjusted to fit screen) === */
 .timetable {
   margin-top: 2rem;
-  overflow-x: auto;
-}
-
-.timetable table {
   width: 100%;
+  height: calc(100vh - 250px); /* fit inside screen minus header/footer */
   border-collapse: collapse;
   table-layout: fixed;
+  font-size: 0.8rem; /* shrink font slightly to fit */
 }
 
 .timetable th, .timetable td {
   border: 1px solid #eee;
-  padding: 8px;
+  padding: 4px;
   vertical-align: top;
-  height: 80px;
+  height: calc((100vh - 250px) / 10); /* auto height fit */
+  overflow: hidden;
 }
 
 .timetable th {
@@ -296,38 +296,38 @@ td strong {
   background-color: #FFD6BA;
   font-weight: bold;
   text-align: center;
-  width: 80px;
+  width: 60px;
 }
 
 .class-event {
   background-color: #ff8c66;
   color: white;
-  padding: 8px;
+  padding: 4px;
   border-radius: 6px;
-  margin-bottom: 5px;
-  font-size: 0.9rem;
+  margin-bottom: 3px;
+  font-size: 0.7rem;
   height: 100%;
 }
 
 .class-name {
   font-weight: bold;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .class-location {
   font-style: italic;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .class-notes {
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   opacity: 0.9;
 }
 
 .class-actions {
-  margin-top: 6px;
+  margin-top: 4px;
   display: flex;
-  gap: 0.5rem;
+  gap: 0.3rem;
   justify-content: flex-start;
   background: transparent; 
 }
@@ -338,29 +338,28 @@ td strong {
   color: #fff;
   text-decoration: underline;
   cursor: pointer;
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   padding: 0;
 }
 
 .class-actions a {
   color: #fff;
   text-decoration: underline;
-  font-size: 0.8rem;
+  font-size: 0.7rem;
 }
 
 @media (max-width: 968px) {
   .timetable {
-    font-size: 0.8rem;
+    font-size: 0.7rem;
   }
   
   .timetable th, .timetable td {
-    padding: 4px;
-    height: 60px;
+    padding: 3px;
   }
   
   .class-event {
-    padding: 4px;
-    font-size: 0.7rem;
+    padding: 3px;
+    font-size: 0.6rem;
   }
 }
 
@@ -372,7 +371,7 @@ td strong {
   }
   
   .time-header {
-    width: 60px;
+    width: 50px;
   }
 }
 
@@ -394,4 +393,4 @@ td strong {
 .class-event.thursday  { background-color: #FF9800; }  
 .class-event.friday    { background-color: #F44336; }   
 .class-event.saturday  { background-color: #795548; }  
-.class-event.sunday    { background-color: #607D8B; }   
+.class-event.sunday    { background-color: #607D8B; }  
