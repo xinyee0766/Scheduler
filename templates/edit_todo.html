@@ -6,20 +6,37 @@
 <main class="container">
   <h1>Edit Task</h1>
 
-  <form method="POST">
-    <label>Task</label>
-    <input type="text" name="task" value="{{ todo.task }}" required>
+  <!-- Flash messages -->
+  <div class="flash-messages">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
 
-    <label>Due Date</label>
-    <input type="date" name="due_date" value="{{ todo.due_date }}" required>
-
+  <form method="POST" class="grid">
     <label>
-      <input type="checkbox" name="is_done" {% if todo.is_done %}checked{% endif %}>
-      Mark as Done
+      Task
+      <input type="text" name="task" value="{{ todo.task }}" required>
     </label>
 
-    <button type="submit" class="btn">Update</button>
-    <a href="{{ url_for('todos') }}" class="btn cancel">Cancel</a>
+    <label>
+      Due Date
+      <input type="date" name="due_date" value="{{ todo.due_date }}" required>
+    </label>
+
+    <label>
+      Done
+      <input type="checkbox" name="is_done" {% if todo.is_done %}checked{% endif %}>
+    </label>
+
+    <div class="actions">
+      <button type="submit" class="btn">Save</button>
+      <a href="{{ url_for('todos') }}" class="btn cancel">Cancel</a>
+    </div>
   </form>
 </main>
 {% endblock %}

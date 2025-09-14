@@ -240,6 +240,7 @@ table {
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   font-size: 15px;
+  border: 1px solid #ddd; 
 }
 
 thead {
@@ -272,17 +273,17 @@ td strong {
 .timetable {
   margin-top: 2rem;
   width: 100%;
-  height: calc(100vh - 250px); /* fit inside screen minus header/footer */
+  height: calc(100vh - 250px);
   border-collapse: collapse;
   table-layout: fixed;
-  font-size: 0.8rem; /* shrink font slightly to fit */
+  font-size: 0.8rem;
 }
 
 .timetable th, .timetable td {
   border: 1px solid #eee;
   padding: 4px;
   vertical-align: top;
-  height: calc((100vh - 250px) / 10); /* auto height fit */
+  height: calc((100vh - 250px) / 10);
   overflow: hidden;
 }
 
@@ -300,7 +301,6 @@ td strong {
 }
 
 .class-event {
-  background-color: #ff8c66;
   color: white;
   padding: 4px;
   border-radius: 6px;
@@ -348,33 +348,6 @@ td strong {
   font-size: 0.7rem;
 }
 
-@media (max-width: 968px) {
-  .timetable {
-    font-size: 0.7rem;
-  }
-  
-  .timetable th, .timetable td {
-    padding: 3px;
-  }
-  
-  .class-event {
-    padding: 3px;
-    font-size: 0.6rem;
-  }
-}
-
-@media (max-width: 768px) {
-  .timetable {
-    display: block;
-    overflow-x: auto;
-    white-space: nowrap;
-  }
-  
-  .time-header {
-    width: 50px;
-  }
-}
-
 .site-header h1 {
   font-size: 3rem;   
   font-weight: bold;
@@ -409,7 +382,7 @@ td strong {
 }
 
 .styled-table th {
-  background-color: #f4f4f4;
+  background-color: #FFD6BA;
 }
 
 .styled-table tr.done td {
@@ -422,16 +395,6 @@ td strong {
   padding: 5px 10px;
   margin: 2px;
   font-size: 14px;
-}
-
-.btn-small.delete {
-  background-color: #d9534f;
-  color: white;
-}
-
-.btn.cancel {
-  background-color: #ccc;
-  color: black;
 }
 
 .site-header {
@@ -459,4 +422,236 @@ td strong {
 .navbar a:hover {
   text-decoration: underline;
   color: #ffcc00;
+}
+
+.btn {
+  display: inline-block;
+  padding: 10px 20px;
+  margin: 10px 5px 0 0;
+  border: none;
+  border-radius: 5px;
+  text-decoration: none;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  background-color: #eee;
+  color: #000;
+}
+
+.btn:hover {
+  background-color: #ddd;
+}
+
+.btn.cancel {
+  background-color: #f44336; 
+  color: #fff;
+}
+
+.btn.cancel:hover {
+  background-color: #d32f2f;
+}
+
+/* Tabs styling */
+.tabs {
+  display: flex;
+  margin-bottom: 20px;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.tab {
+  padding: 12px 20px;
+  cursor: pointer;
+  background: #f5f5f5;
+  border: none;
+  flex: 1;
+  text-align: center;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.tab.active {
+  background: #ff8c66;
+  color: white;
+}
+
+.tab:hover:not(.active) {
+  background: #e0e0e0;
+}
+
+/* === TO-DO LIST SPECIFIC FIXES === */
+
+/* Container must match Class Management exactly */
+.container {
+  background: #FFDCDC; /* Already set — good */
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+  padding: 2.5rem;
+  margin: 10px auto;
+  max-width: 1100px;
+}
+
+/* Header */
+.container h1 {
+  color: #000;
+  margin-bottom: 1.5rem;
+  text-align: left;
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-start;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.search-form input {
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  background: #fff;
+  font-size: 15px;
+  width: 280px;
+}
+
+/* Buttons — Match Class Management Style */
+.button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.3s;
+  color: #000;
+  display: inline-block;
+}
+
+.button.primary {
+  background-color: #ff8c66; /* Orange — matches "Add New Class" */
+  color: white;
+}
+
+.button.primary:hover {
+  background-color: #e67350;
+}
+
+.button.secondary {
+  background-color: #eee; /* Gray — matches "View Timetable" */
+  color: #000;
+}
+
+.button.secondary:hover {
+  background-color: #ddd;
+}
+
+.button.small {
+  padding: 6px 12px;
+  font-size: 14px;
+  margin: 0 2px;
+}
+
+/* Delete button — MUST BE GRAY, NOT RED */
+.button.small.secondary {
+  background-color: #eee;
+  color: #000;
+}
+
+.button.small.secondary:hover {
+  background-color: #ddd;
+}
+
+/* Table — Must match Class Management exactly */
+.styled-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 2rem;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.styled-table th {
+  background-color: #FFD6BA;
+  color: #000;
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 14px;
+  padding: 14px 16px;
+  border: 1px solid #ddd;
+}
+
+.styled-table td {
+  padding: 14px 16px;
+  border: 1px solid #ddd;
+  font-size: 15px;
+}
+
+.styled-table tbody tr:nth-child(even) {
+  background-color: #FFF2EB;
+}
+
+.styled-table tbody tr:hover {
+  background-color: #FFE0D2;
+}
+
+/* Status Tags */
+.status-done {
+  color: #28a745;
+  font-weight: bold;
+  background: #e8f5e9;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+}
+
+.status-pending {
+  color: #dc3545;
+  font-weight: bold;
+  background: #fdf2f2;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+}
+
+.empty-message {
+  text-align: left;    /* left-align text */
+  color: #000;
+  font-style: normal;
+  margin-top: 1.5rem;  /* optional: reduce top margin if needed */
+  font-size: 15px;
+}
+
+.empty-message a {
+  color: #ff8c66;
+  text-decoration: none;
+}
+
+.empty-message a:hover {
+  text-decoration: underline;
+}
+
+.search-form button {
+  padding: 12px 16px;       /* match input height */
+  border-radius: 10px;      /* same as input */
+  font-size: 15px;          /* same as input */
+  border: none;
+  cursor: pointer;
+  transition: background 0.3s;
+  text-align: center;
+}
+
+.search-form button.primary {
+  background-color: #ff8c66; /* pink/orange like classes.html */
+  color: #fff;
+}
+
+.search-form button.primary:hover {
+  background-color: #e67350;
 }
