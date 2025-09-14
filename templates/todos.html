@@ -26,6 +26,7 @@
       <tr>
         <th>Task</th>
         <th>Due Date</th>
+        <th>Due Time</th>
         <th>Status</th>
         <th>Actions</th>
       </tr>
@@ -35,6 +36,7 @@
       <tr class="{% if todo.is_done %}done{% endif %}">
         <td>{{ todo.task }}</td>
         <td>{{ todo.due_date }}</td>
+        <td>{{ todo.due_time or '—' }}</td>
         <td>
           {% if todo.is_done %}
             <span class="status-done">Done</span>

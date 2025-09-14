@@ -2,13 +2,16 @@ import sqlite3
 import os
 from datetime import date
 
+# Database file path
 DB_NAME = os.path.join(os.path.dirname(__file__), "classes.db")
 
+# ---------------------- DB CONNECTION ----------------------
 def get_db_connection():
     conn = sqlite3.connect(DB_NAME, timeout=10)
     conn.row_factory = sqlite3.Row
     return conn
 
+# ---------------------- INIT DB ----------------------
 def init_db():
     with get_db_connection() as conn:
         conn.execute('''
@@ -22,16 +25,17 @@ def init_db():
                 notes TEXT
             )
         ''')
-
         conn.execute('''
             CREATE TABLE IF NOT EXISTS todos (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 task TEXT NOT NULL,
                 due_date TEXT NOT NULL,
+                due_time TEXT,
                 is_done INTEGER DEFAULT 0
             )
         ''')
 
+# ---------------------- CLASS MODEL ----------------------
 class Class:
     def __init__(self, id=None, name="", day="", start_time="", end_time="", location="", notes=""):
         self.id = id
@@ -73,17 +77,19 @@ class Class:
         with get_db_connection() as conn:
             conn.execute("DELETE FROM classes WHERE id=?", (self.id,))
 
+# ---------------------- TODO MODEL ----------------------
 class Todo:
-    def __init__(self, id=None, task="", due_date="", is_done=0):
+    def __init__(self, id=None, task="", due_date="", due_time=None, is_done=0):
         self.id = id
         self.task = task
         self.due_date = due_date
+        self.due_time = due_time
         self.is_done = is_done
 
     @staticmethod
     def all():
         with get_db_connection() as conn:
-            rows = conn.execute("SELECT * FROM todos ORDER BY due_date").fetchall()
+            rows = conn.execute("SELECT * FROM todos ORDER BY due_date, due_time").fetchall()
             return [Todo(**dict(r)) for r in rows]
 
     @staticmethod
@@ -103,13 +109,13 @@ class Todo:
         with get_db_connection() as conn:
             if self.id:
                 conn.execute('''
-                    UPDATE todos SET task=?, due_date=?, is_done=? WHERE id=?
-                ''', (self.task, self.due_date, self.is_done, self.id))
+                    UPDATE todos SET task=?, due_date=?, due_time=?, is_done=? WHERE id=?
+                ''', (self.task, self.due_date, self.due_time, self.is_done, self.id))
             else:
                 cursor = conn.execute('''
-                    INSERT INTO todos (task, due_date, is_done)
-                    VALUES (?, ?, ?)
-                ''', (self.task, self.due_date, self.is_done))
+                    INSERT INTO todos (task, due_date, due_time, is_done)
+                    VALUES (?, ?, ?, ?)
+                ''', (self.task, self.due_date, self.due_time, self.is_done))
                 self.id = cursor.lastrowid
 
     def delete(self):

@@ -1,8 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 import sqlite3
 import os
-from datetime import datetime, timedelta
-from models import Todo, init_db  
+from datetime import datetime, timedelta, date
+from models import Todo, Class, init_db 
 
 app = Flask(__name__)
 app.secret_key = "xinyee0766"
@@ -138,22 +138,29 @@ def timetable():
                            time_slots=time_slots,
                            class_map=class_map)
 
+# ---------------------- To-Do Routes ----------------------
 @app.route("/todos")
 def todos():
     search_query = request.args.get("q", "").strip()
     if search_query:
-        todos = [t for t in Todo.all() if search_query.lower() in t.task.lower()]
+        with get_db_connection() as conn:
+            rows = conn.execute(
+                "SELECT * FROM todos WHERE task LIKE ? ORDER BY due_date",
+                (f"%{search_query}%",)
+            ).fetchall()
+            todos_filtered = [Todo(**dict(r)) for r in rows]
+        return render_template("todos.html", todos=todos_filtered, search_query=search_query)
     else:
-        todos = Todo.all()
-    return render_template("todos.html", todos=todos, search_query=search_query)
-
+        all_todos = Todo.all()
+        return render_template("todos.html", todos=all_todos)
 
 @app.route("/todos/add", methods=["GET", "POST"])
 def add_todo():
     if request.method == "POST":
         task = request.form["task"]
         due_date = request.form["due_date"]
-        todo = Todo(task=task, due_date=due_date)
+        due_time = request.form.get("due_time")
+        todo = Todo(task=task, due_date=due_date, due_time=due_time)
         todo.save()
         flash("Task added successfully!", "success")
         return redirect(url_for("todos"))
@@ -168,13 +175,14 @@ def edit_todo(todo_id):
     if request.method == "POST":
         todo.task = request.form["task"]
         todo.due_date = request.form["due_date"]
+        todo.due_time = request.form.get("due_time")
         todo.is_done = int("is_done" in request.form)
         todo.save()
         flash("Task updated successfully!", "success")
         return redirect(url_for("todos"))
     return render_template("edit_todo.html", todo=todo)
 
-@app.route("/todos/delete/<int:todo_id>")
+@app.route("/todos/delete/<int:todo_id>", methods=["POST"])
 def delete_todo(todo_id):
     todo = Todo.get_by_id(todo_id)
     if todo:
@@ -187,5 +195,6 @@ def check_todos():
     due_today = Todo.get_due_today()
     return {"tasks": [t.task for t in due_today]}
 
+# ---------------------- Run App ----------------------
 if __name__ == "__main__":
     app.run(debug=True)

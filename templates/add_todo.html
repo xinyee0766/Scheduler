@@ -17,6 +17,12 @@
         <span>Due Date</span>
         <input type="date" name="due_date" required />
       </label>
+
+      <!-- NEW: Due Time input -->
+      <label>
+        <span>Due Time</span>
+        <input type="time" name="due_time" />
+      </label>
     </div>
 
     <div class="actions">
@@ -39,6 +45,7 @@ form.addEventListener('input', () => {
   const data = new FormData(form);
   const task = data.get('task') || '—';
   const due_date = data.get('due_date') || '—';
+  const due_time = data.get('due_time') || '—'; // NEW
 
   preview.innerHTML = `
     <table border="1" cellpadding="8" cellspacing="0" class="styled-table">
@@ -46,12 +53,14 @@ form.addEventListener('input', () => {
         <tr>
           <th>Task</th>
           <th>Due Date</th>
+          <th>Due Time</th>
         </tr>
       </thead>
       <tbody>
         <tr>
           <td>${task}</td>
           <td>${due_date}</td>
+          <td>${due_time}</td>
         </tr>
       </tbody>
     </table>
