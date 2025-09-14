@@ -1,16 +1,15 @@
 import sqlite3
 import os
+from datetime import date
 
-DB_NAME = os.path.join(os.path.dirname(__file__), 'classes.db')
+DB_NAME = os.path.join(os.path.dirname(__file__), "classes.db")
 
 def get_db_connection():
-    """Return a DB connection with row access by column name."""
     conn = sqlite3.connect(DB_NAME, timeout=10)
     conn.row_factory = sqlite3.Row
     return conn
 
 def init_db():
-    """Initialize the database with classes table if it doesn't exist."""
     with get_db_connection() as conn:
         conn.execute('''
             CREATE TABLE IF NOT EXISTS classes (
@@ -24,9 +23,16 @@ def init_db():
             )
         ''')
 
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS todos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                task TEXT NOT NULL,
+                due_date TEXT NOT NULL,
+                is_done INTEGER DEFAULT 0
+            )
+        ''')
+
 class Class:
-    """Class representing a scheduled class"""
-    
     def __init__(self, id=None, name="", day="", start_time="", end_time="", location="", notes=""):
         self.id = id
         self.name = name
@@ -36,87 +42,76 @@ class Class:
         self.location = location
         self.notes = notes
 
+    @staticmethod
+    def all():
+        with get_db_connection() as conn:
+            rows = conn.execute("SELECT * FROM classes ORDER BY day, start_time").fetchall()
+            return [Class(**dict(r)) for r in rows]
+
+    @staticmethod
+    def get(class_id):
+        with get_db_connection() as conn:
+            row = conn.execute("SELECT * FROM classes WHERE id=?", (class_id,)).fetchone()
+            return Class(**dict(row)) if row else None
+
     def save(self):
-        """Insert or update the class in the database."""
-        conn = get_db_connection()
-        c = conn.cursor()
-        if self.id:
-            c.execute('''
-                UPDATE classes
-                SET name=?, day=?, start_time=?, end_time=?, location=?, notes=?
-                WHERE id=?
-            ''', (self.name, self.day, self.start_time, self.end_time, self.location, self.notes, self.id))
-        else:
-            c.execute('''
-                INSERT INTO classes (name, day, start_time, end_time, location, notes)
-                VALUES (?, ?, ?, ?, ?, ?)
-            ''', (self.name, self.day, self.start_time, self.end_time, self.location, self.notes))
-            self.id = c.lastrowid
-        conn.commit()
-        conn.close()
-        return True
+        with get_db_connection() as conn:
+            if self.id:
+                conn.execute('''
+                    UPDATE classes
+                    SET name=?, day=?, start_time=?, end_time=?, location=?, notes=?
+                    WHERE id=?
+                ''', (self.name, self.day, self.start_time, self.end_time, self.location, self.notes, self.id))
+            else:
+                cursor = conn.execute('''
+                    INSERT INTO classes (name, day, start_time, end_time, location, notes)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                ''', (self.name, self.day, self.start_time, self.end_time, self.location, self.notes))
+                self.id = cursor.lastrowid
 
     def delete(self):
-        """Delete the class from the database."""
-        if not self.id:
-            return False
-        conn = get_db_connection()
-        conn.execute("DELETE FROM classes WHERE id=?", (self.id,))
-        conn.commit()
-        conn.close()
-        return True
+        with get_db_connection() as conn:
+            conn.execute("DELETE FROM classes WHERE id=?", (self.id,))
+
+class Todo:
+    def __init__(self, id=None, task="", due_date="", is_done=0):
+        self.id = id
+        self.task = task
+        self.due_date = due_date
+        self.is_done = is_done
 
     @staticmethod
-    def get_all():
-        """Return all classes ordered by day and start time."""
-        conn = get_db_connection()
-        c = conn.cursor()
-        c.execute('SELECT * FROM classes ORDER BY day, start_time')
-        classes = [Class(
-            id=row['id'],
-            name=row['name'],
-            day=row['day'],
-            start_time=row['start_time'],
-            end_time=row['end_time'],
-            location=row['location'],
-            notes=row['notes']
-        ) for row in c.fetchall()]
-        conn.close()
-        return classes
+    def all():
+        with get_db_connection() as conn:
+            rows = conn.execute("SELECT * FROM todos ORDER BY due_date").fetchall()
+            return [Todo(**dict(r)) for r in rows]
 
     @staticmethod
-    def get_by_id(class_id):
-        """Return a single class by ID."""
-        conn = get_db_connection()
-        row = conn.execute("SELECT * FROM classes WHERE id=?", (class_id,)).fetchone()
-        conn.close()
-        if row:
-            return Class(
-                id=row['id'],
-                name=row['name'],
-                day=row['day'],
-                start_time=row['start_time'],
-                end_time=row['end_time'],
-                location=row['location'],
-                notes=row['notes']
-            )
-        return None
+    def get_by_id(todo_id):
+        with get_db_connection() as conn:
+            row = conn.execute("SELECT * FROM todos WHERE id=?", (todo_id,)).fetchone()
+            return Todo(**dict(row)) if row else None
 
     @staticmethod
-    def search(query):
-        """Search classes by name."""
-        conn = get_db_connection()
-        c = conn.cursor()
-        c.execute('SELECT * FROM classes WHERE name LIKE ? ORDER BY day, start_time',
-                  ('%' + query + '%',))
-        classes = [Class(
-            id=row['id'],
-            name=row['name'],
-            day=row['day'],
-            start_time=row['start_time'],
-            end_time=row['end_time'],
-            location=row['location'],
-            notes=row['notes']
-        ) for row in c.fetchall()]
-        conn.close()
-        return classes
+    def get_due_today():
+        today_str = date.today().strftime("%Y-%m-%d")
+        with get_db_connection() as conn:
+            rows = conn.execute("SELECT * FROM todos WHERE due_date=?", (today_str,)).fetchall()
+            return [Todo(**dict(r)) for r in rows]
+
+    def save(self):
+        with get_db_connection() as conn:
+            if self.id:
+                conn.execute('''
+                    UPDATE todos SET task=?, due_date=?, is_done=? WHERE id=?
+                ''', (self.task, self.due_date, self.is_done, self.id))
+            else:
+                cursor = conn.execute('''
+                    INSERT INTO todos (task, due_date, is_done)
+                    VALUES (?, ?, ?)
+                ''', (self.task, self.due_date, self.is_done))
+                self.id = cursor.lastrowid
+
+    def delete(self):
+        with get_db_connection() as conn:
+            conn.execute("DELETE FROM todos WHERE id=?", (self.id,))

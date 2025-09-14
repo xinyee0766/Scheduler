@@ -394,3 +394,69 @@ td strong {
 .class-event.friday    { background-color: #F44336; }   
 .class-event.saturday  { background-color: #795548; }  
 .class-event.sunday    { background-color: #607D8B; }  
+
+.styled-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  font-size: 16px;
+  text-align: left;
+}
+
+.styled-table th, .styled-table td {
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+}
+
+.styled-table th {
+  background-color: #f4f4f4;
+}
+
+.styled-table tr.done td {
+  text-decoration: line-through;
+  color: #888;
+  background-color: #f9f9f9;
+}
+
+.btn-small {
+  padding: 5px 10px;
+  margin: 2px;
+  font-size: 14px;
+}
+
+.btn-small.delete {
+  background-color: #d9534f;
+  color: white;
+}
+
+.btn.cancel {
+  background-color: #ccc;
+  color: black;
+}
+
+.site-header {
+  color: #fff;
+  padding: 10px;
+  text-align: center;
+}
+
+.site-header h1 {
+  margin: 0;
+  font-size: 1.8rem;
+}
+
+.navbar {
+  margin-top: 8px;
+}
+
+.navbar a {
+  color: #fff;
+  margin: 0 15px;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.navbar a:hover {
+  text-decoration: underline;
+  color: #ffcc00;
+}

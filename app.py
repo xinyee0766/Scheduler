@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash
 import sqlite3
 import os
 from datetime import datetime, timedelta
+from models import Todo, init_db  # Make sure your models.py includes Todo and init_db
 
 app = Flask(__name__)
 app.secret_key = "xinyee0766"
@@ -12,22 +13,10 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
-def init_db():
-    with get_db_connection() as conn:
-        conn.execute('''
-            CREATE TABLE IF NOT EXISTS classes (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                day TEXT NOT NULL,
-                start_time TEXT NOT NULL,
-                end_time TEXT NOT NULL,
-                location TEXT NOT NULL,
-                notes TEXT
-            )
-        ''')
+# ----------------- Initialize Database -----------------
+init_db()  # This now creates both classes and todos tables
 
-init_db()
-
+# ----------------- Classes Routes -----------------
 @app.route("/", methods=["GET"])
 def index():
     search_query = request.args.get("q", "").strip()
@@ -109,13 +98,10 @@ def edit_class(class_id):
 def delete_class(class_id):
     with get_db_connection() as conn:
         class_obj = conn.execute("SELECT * FROM classes WHERE id=?", (class_id,)).fetchone()
-        if not class_obj:
-            flash("Class not found", "error")
-            return redirect(url_for('index'))
-
-        conn.execute("DELETE FROM classes WHERE id=?", (class_id,))
-        conn.commit()
-    flash("Class deleted successfully!", "success")
+        if class_obj:
+            conn.execute("DELETE FROM classes WHERE id=?", (class_id,))
+            conn.commit()
+            flash("Class deleted successfully!", "success")
     return redirect(url_for('index'))
 
 @app.route('/timetable')
@@ -124,7 +110,6 @@ def timetable():
     classes = conn.execute("SELECT * FROM classes").fetchall()
     conn.close()
 
-    # Hourly slots
     start = datetime.strptime("08:00", "%H:%M")
     end = datetime.strptime("20:00", "%H:%M")
     time_slots = []
@@ -132,7 +117,6 @@ def timetable():
         time_slots.append(start.strftime("%H:%M"))
         start += timedelta(hours=1)
 
-    # Build class map
     class_map = {day: {slot: [] for slot in time_slots} for day in
                  ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']}
 
@@ -156,6 +140,50 @@ def timetable():
                            time_slots=time_slots,
                            class_map=class_map)
 
+# ----------------- Todos Routes -----------------
+@app.route("/todos")
+def todos():
+    all_todos = Todo.all()
+    return render_template("todos.html", todos=all_todos)
+
+@app.route("/todos/add", methods=["GET", "POST"])
+def add_todo():
+    if request.method == "POST":
+        task = request.form["task"]
+        due_date = request.form["due_date"]
+        todo = Todo(task=task, due_date=due_date)
+        todo.save()
+        flash("✅ Task added!", "success")
+        return redirect(url_for("todos"))
+    return render_template("add_todo.html")
+
+@app.route("/todos/edit/<int:todo_id>", methods=["GET", "POST"])
+def edit_todo(todo_id):
+    todo = Todo.get_by_id(todo_id)
+    if not todo:
+        flash("❌ Task not found.", "error")
+        return redirect(url_for("todos"))
+    if request.method == "POST":
+        todo.task = request.form["task"]
+        todo.due_date = request.form["due_date"]
+        todo.is_done = int("is_done" in request.form)
+        todo.save()
+        flash("✅ Task updated!", "success")
+        return redirect(url_for("todos"))
+    return render_template("edit_todo.html", todo=todo)
+
+@app.route("/todos/delete/<int:todo_id>")
+def delete_todo(todo_id):
+    todo = Todo.get_by_id(todo_id)
+    if todo:
+        todo.delete()
+        flash("🗑️ Task deleted.", "success")
+    return redirect(url_for("todos"))
+
+@app.route("/todos/check")
+def check_todos():
+    due_today = Todo.get_due_today()
+    return {"tasks": [t.task for t in due_today]}
 
 if __name__ == "__main__":
     app.run(debug=True)
