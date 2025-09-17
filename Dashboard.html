@@ -5,7 +5,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>ByeByeLastMinute</title>
   <link rel="stylesheet" href="style.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+
 </head>
+
 <body>
   <header>
     <h1>ByeByeLastMinute</h1>
@@ -13,28 +16,13 @@
   </header>
 
   <nav>
-    <button class="tab-btn active" data-target="formSection">Form</button>
+    <button class="tab-btn active" data-target="Homesection">Home</button>
     <button class="tab-btn" data-target="timetableSection">Timetable</button>
     <button class="tab-btn" data-target="dashboardSection">Dashboard</button>
   </nav>
 
   <main>
-    <section id="formSection" class="section active">
-      <h2>Add Class</h2>
-      <form id="classForm">
-        <input type="text" id="subject" placeholder="Subject" required />
-        <select id="day" required>
-          <option value="">Day</option>
-          <option>Mon</option><option>Tue</option><option>Wed</option>
-          <option>Thu</option><option>Fri</option>
-        </select>
-        <input type="time" id="startTime" required />
-        <input type="time" id="endTime" required />
-        <input type="text" id="location" placeholder="Location" />
-        <button type="submit">+ Add Class</button>
-      </form>
-    </section>
-
+    
     <section id="timetableSection" class="section">
       <h2>Timetable</h2>
       <div id="timetableGrid"></div>
@@ -45,22 +33,37 @@
       <ul id="classList"></ul>
 
       <!-- Drag & Drop Upload Area -->
-      <div id="dropzone" class="dropzone">
-           <div class="dropzone-content">
-        <div class="upload-icon">⬆️</div>
-        <p>Drag & drop files here</p>
-        <p class="small">or <button id="browseTrigger" type="button" class="browse-btn">browse</button> from your computer</p>
-      </div>
-      <input type="file" id="fileInput" multiple hidden />
+  <div id="dropzone" class="dropzone">
+    <div class="dropzone-content">
+      <div class="upload-icon">⬆</div>
+      <p>Drag & drop files here</p>
+      <p class="small">
+        or 
+        <button id="browseTrigger" type="button" class="browse-btn">browse</button> 
+        from your computer
+      </p>
     </div>
+    <input type="file" id="fileInput" multiple hidden />
+  </div>
+  <!-- File Management Buttons -->
+<div id="fileActions" class="file-actions">
+  <button id="editToggle" type="button">✏️ Edit</button>
+  <button id="deleteSelected" type="button" style="display:none;">🗑️ Delete Selected</button>
+  <button id="deleteAll" type="button" style="display:none;">🚮 Delete All</button>
+</div>
 
-    <!-- Uploaded File List -->
-    <ul id="fileList"></ul>
+<!-- Preview Window -->
+<div id="preview"></div>
+
+
+
+   <!-- Preview Window -->
+  <div id="preview"></div>
     </section>
   </main>
 
-  <script src="DarkModeToggle.js"></script>
-  <script src="tabswitch.js"></script>
-  <script src="dragdrop.js"></script>
+  <script src="DarkModeToggle.js" defer></script>
+<script src="tabswitch.js" defer></script>
+<script src="dragdrop.js" defer></script>
 </body>
 </html>
