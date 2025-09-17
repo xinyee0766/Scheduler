@@ -1,11 +1,37 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from datetime import datetime, timedelta
+import json
+import os
 
 app = Flask(__name__)
 CORS(app)
 
 # save reminder
 reminders = []
+# save reminder history
+reminder_history = []
+
+# Load data from file if exists
+def load_data():
+    global reminders, reminder_history
+    if os.path.exists('reminders.json'):
+        with open('reminders.json', 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            reminders = data.get('reminders', [])
+            reminder_history = data.get('history', [])
+
+# Save data to file
+def save_data():
+    data = {
+        'reminders': reminders,
+        'history': reminder_history
+    }
+    with open('reminders.json', 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+# Load data on startup
+load_data()
 
 # get reminder
 @app.route("/reminders", methods=["GET"])
@@ -20,11 +46,24 @@ def add_reminder():
 
     # check the field are complete
     if all(field in data and data[field] for field in required_fields):
-        reminders.append({
+        reminder = {
             "task": data["task"].strip(),
             "subject": data["subject"].strip(),
-            "due": data["due"]
-        })
+            "due": data["due"],
+            "created_at": datetime.now().isoformat(),
+            "id": len(reminders)
+        }
+        reminders.append(reminder)
+        
+        # Add to history
+        history_entry = {
+            "action": "created",
+            "reminder": reminder.copy(),
+            "timestamp": datetime.now().isoformat()
+        }
+        reminder_history.append(history_entry)
+        
+        save_data()
         return jsonify({
             "message": "add reminder successfully ✅",
             "reminders": reminders
@@ -39,6 +78,16 @@ def add_reminder():
 def delete_reminder(index):
     if 0 <= index < len(reminders):
         deleted = reminders.pop(index)
+        
+        # Add to history
+        history_entry = {
+            "action": "deleted",
+            "reminder": deleted,
+            "timestamp": datetime.now().isoformat()
+        }
+        reminder_history.append(history_entry)
+        
+        save_data()
         return jsonify({
             "message": f"reminder has deleted：{deleted['task']} 🗑️",
             "reminders": reminders
@@ -47,6 +96,30 @@ def delete_reminder(index):
         return jsonify({
             "error": "cannnot find the reminders ❌"
         }), 404
+
+# get reminder history
+@app.route("/history", methods=["GET"])
+def get_history():
+    return jsonify(reminder_history), 200
+
+# check upcoming reminders for notifications
+@app.route("/upcoming", methods=["GET"])
+def get_upcoming():
+    upcoming = []
+    today = datetime.now().date()
+    
+    for reminder in reminders:
+        due_date = datetime.strptime(reminder["due"], "%Y-%m-%d").date()
+        days_left = (due_date - today).days
+        
+        if 0 <= days_left <= 3:  # Due within 3 days
+            upcoming.append({
+                **reminder,
+                "days_left": days_left,
+                "urgent": days_left == 0
+            })
+    
+    return jsonify(upcoming), 200
 
 # launch flask
 if __name__ == "__main__":
