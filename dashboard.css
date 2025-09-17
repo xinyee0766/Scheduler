@@ -1,106 +1,69 @@
-/* --- Upload Page Styles --- */
-body {
-  font-family: system-ui, sans-serif;
-  background: #f8fafc;
-  margin: 0;
-  padding: 2rem;
-  color: #333;
-}
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ByeByeLastMinute</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 
-header {
-  margin-bottom: 2rem;
-}
+</head>
 
-header h1 {
-  margin: 0 0 0.5rem 0;
-}
+<body>
+  <header>
+    <h1>ByeByeLastMinute</h1>
+    <button id="darkModeToggle">🌗 Dark Mode</button>
+  </header>
 
-header nav a {
-  color: #2563eb;
-  text-decoration: none;
-  font-size: 0.9rem;
-}
+  <nav>
+    <button class="tab-btn active" data-target="Homesection">Home</button>
+    <button class="tab-btn" data-target="timetableSection">Timetable</button>
+    <button class="tab-btn" data-target="dashboardSection">Dashboard</button>
+  </nav>
 
-header nav a:hover {
-  text-decoration: underline;
-}
+  <main>
+    
+    <section id="timetableSection" class="section">
+      <h2>Timetable</h2>
+      <div id="timetableGrid"></div>
+    </section>
 
-/* Dropzone styled like textbox */
-.dropzone {
-  margin-top: 1rem;
-  padding: 0.8rem 1rem;
-  border: 1.5px solid #ccc;
-  border-radius: 6px;
-  text-align: left;
-  color: #666;
-  font-size: 0.95rem;
-  background-color: #fff;
-  transition: all 0.2s ease;
-  cursor: pointer;
-}
+    <section id="dashboardSection" class="section">
+      <h2>Dashboard</h2>
+      <ul id="classList"></ul>
 
-.dropzone.dragover {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
-  background: #f9fbff;
-}
+      <!-- Drag & Drop Upload Area -->
+  <div id="dropzone" class="dropzone">
+    <div class="dropzone-content">
+      <div class="upload-icon">⬆</div>
+      <p>Drag & drop files here</p>
+      <p class="small">
+        or 
+        <button id="browseTrigger" type="button" class="browse-btn">browse</button> 
+        from your computer
+      </p>
+    </div>
+    <input type="file" id="fileInput" multiple hidden />
+  </div>
+  <!-- File Management Buttons -->
+<div id="fileActions" class="file-actions">
+  <button id="editToggle" type="button">✏️ Edit</button>
+  <button id="deleteSelected" type="button" style="display:none;">🗑️ Delete Selected</button>
+  <button id="deleteAll" type="button" style="display:none;">🚮 Delete All</button>
+</div>
 
-.dropzone p {
-  margin: 0;
-  color: #666;
-}
+<!-- Preview Window -->
+<div id="preview"></div>
 
-/* Clickable "browse" text */
-.browse-btn {
-  background: none;
-  border: none;
-  color: #2563eb;
-  font-weight: 500;
-  cursor: pointer;
-  text-decoration: underline;
-  padding: 0;
-}
 
-.browse-btn:hover {
-  color: #1e3a8a;
-}
 
-/* Uploaded file list */
-#fileList {
-  margin-top:
-0.8rem;
-  list-style: none;
-  padding: 0;
-}
+   <!-- Preview Window -->
+  <div id="preview"></div>
+    </section>
+  </main>
 
-#fileList li {
-  padding: 6px 10px;
-  border: 1px solid #e5e7eb;
-  border-radius: 4px;
-  margin-bottom: 5px;
-  font-size: 0.9rem;
-  background: #f9fafb;
-}
-/* File previews */
-#fileList li {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.file-preview img {
-  width: 40px;
-  height: 40px;
-  object-fit: cover;
-  border-radius: 4px;
-  border: 1px solid #ddd;
-}
-
-.file-icon {
-  width: 40px;
-  height: 40px;
-  font-size: 1.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+  <script src="DarkModeToggle.js" defer></script>
+<script src="tabswitch.js" defer></script>
+<script src="dragdrop.js" defer></script>
+</body>
+</html>
