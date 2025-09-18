@@ -29,5 +29,118 @@
 
     {% block content %}{% endblock %}
   </main>
+
+  <!-- Request Notification Permission -->
+  <script>
+    if ("Notification" in window) {
+      if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+        Notification.requestPermission().then(permission => {
+          console.log("Notification permission:", permission);
+        });
+      }
+    }
+  </script>
+
+  <!-- Register Service Worker -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/static/service-worker.js')
+      .then(reg => console.log('Service Worker registered', reg))
+      .catch(err => console.error('SW registration failed', err));
+    }
+  </script>
+
+  <!-- Poll due tasks -->
+  <script>
+    const notifiedTasks = JSON.parse(localStorage.getItem("notifiedTasks") || "[]");
+
+    async function checkDueTasks() {
+      try {
+        const response = await fetch("/todos/check");
+        const data = await response.json();
+
+        data.tasks.forEach(task => {
+          if (!notifiedTasks.includes(task)) {
+            if ("Notification" in window && Notification.permission === "granted") {
+              new Notification("Task Due Today!", {
+                body: task,
+                icon: "{{ url_for('static', filename='icon.png') }}",
+                requireInteraction: true
+              });
+            }
+            notifiedTasks.push(task);
+          }
+        });
+
+        localStorage.setItem("notifiedTasks", JSON.stringify(notifiedTasks));
+      } catch (err) {
+        console.error("Error checking due tasks:", err);
+      }
+    }
+
+    setInterval(checkDueTasks, 60000); // every 1 min
+    checkDueTasks(); // immediate check
+  </script>
+
+  <!-- Push subscription -->
+  <script>
+    // Needed to convert VAPID key for PushManager
+    function urlBase64ToUint8Array(base64String) {
+      const padding = '='.repeat((4 - base64String.length % 4) % 4);
+      const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+      const rawData = atob(base64);
+      return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+    }
+
+    async function subscribeUser() {
+      console.log("🚀 Starting subscription process...");
+
+      if (!("serviceWorker" in navigator && "PushManager" in window)) {
+        console.log("❌ Push not supported");
+        return;
+      }
+
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        console.log("✅ Service Worker ready");
+
+        let sub = await reg.pushManager.getSubscription();
+        console.log("📡 Current subscription:", sub);
+
+        if (!sub) {
+          console.log("🔐 Subscribing with VAPID key...");
+          const vapidKey = "{{ VAPID_PUBLIC_KEY }}";
+          if (!vapidKey || vapidKey.includes("VAPID")) {
+            console.error("❌ VAPID_PUBLIC_KEY not injected! Check Flask context_processor.");
+            return;
+          }
+
+          sub = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(vapidKey)
+          });
+          console.log("✅ Subscribed!", sub);
+        }
+
+        console.log("📤 Sending subscription to backend...");
+        const response = await fetch("/subscribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(sub)
+        });
+
+        if (response.ok) {
+          console.log("✅ Subscription sent to Flask!");
+        } else {
+          console.error("❌ Failed to send subscription:", await response.text());
+        }
+      } catch (err) {
+        console.error("💥 Subscription error:", err);
+      }
+    }
+
+    // Run subscription
+    subscribeUser();
+  </script>
 </body>
 </html>

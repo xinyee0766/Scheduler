@@ -29,13 +29,18 @@
     </label>
 
     <label>
+      Due Time
+      <input type="time" name="due_time" value="{{ todo.due_time or '' }}">
+    </label>
+
+    <label>
       Done
       <input type="checkbox" name="is_done" {% if todo.is_done %}checked{% endif %}>
     </label>
 
     <div class="actions">
-      <button type="submit" class="btn">Save</button>
-      <a href="{{ url_for('todos') }}" class="btn cancel">Cancel</a>
+      <button type="submit" class="button">Save</button>
+      <a href="{{ url_for('todos') }}" class="button secondary">Cancel</a>
     </div>
   </form>
 </main>
