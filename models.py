@@ -81,7 +81,7 @@ class Class:
 class Todo:
     def __init__(self, id=None, task="", due_date="", due_time=None, is_done=0):
         self.id = id
-        self.task = task
+        self.task = task.strip()
         self.due_date = due_date
         self.due_time = due_time
         self.is_done = is_done

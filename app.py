@@ -13,7 +13,7 @@ app = Flask(__name__)
 app.secret_key = "xinyee0766"
 
 DB_NAME = os.path.join(os.path.dirname(__file__), 'classes.db')
-SUBSCRIPTIONS = []
+SUBSCRIPTIONS = []  # kept for backward compatibility
 
 def get_db_connection():
     conn = sqlite3.connect(DB_NAME, timeout=10)
@@ -22,6 +22,18 @@ def get_db_connection():
 
 # Initialize database
 init_db()
+
+# Ensure subscriptions table exists
+with get_db_connection() as conn:
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS subscriptions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            endpoint TEXT UNIQUE,
+            p256dh TEXT,
+            auth TEXT
+        )
+    """)
+    conn.commit()
 
 # ---------------------- CLASS ROUTES ----------------------
 @app.route("/", methods=["GET"])
@@ -145,7 +157,7 @@ def timetable():
 
     return render_template('timetable.html', time_slots=time_slots, class_map=class_map)
 
-# ---------------------- TO-DO ROUTES ----------------------
+# ---------------------- TODO ROUTES ----------------------
 @app.route("/todos")
 def todos():
     search_query = request.args.get("q", "").strip()
@@ -164,11 +176,17 @@ def todos():
 @app.route("/todos/add", methods=["GET", "POST"])
 def add_todo():
     if request.method == "POST":
-        task = request.form["task"]
+        task = request.form["task"].strip()
         due_date = request.form["due_date"]
         due_time = request.form.get("due_time")
+
         todo = Todo(task=task, due_date=due_date, due_time=due_time)
-        todo.save()
+        try:
+            todo.save()
+        except ValueError as e:
+            flash(str(e), "error")
+            return render_template("add_todo.html")
+
         flash("Task added successfully!", "success")
         return redirect(url_for("todos"))
     return render_template("add_todo.html")
@@ -179,25 +197,30 @@ def edit_todo(todo_id):
     if not todo:
         flash("Task not found.", "error")
         return redirect(url_for("todos"))
+
     if request.method == "POST":
-        todo.task = request.form["task"]
-        todo.due_date = request.form["due_date"]
-        todo.due_time = request.form.get("due_time")
-        todo.is_done = int("is_done" in request.form)
-        todo.save()
+        task = request.form["task"].strip()
+        due_date = request.form["due_date"]
+        due_time = request.form.get("due_time")
+        is_done = int("is_done" in request.form)
+
+        todo.task = task
+        todo.due_date = due_date
+        todo.due_time = due_time
+        todo.is_done = is_done
+
+        try:
+            todo.save()
+        except ValueError as e:
+            flash(str(e), "error")
+            return render_template("edit_todo.html", todo=todo)
+
         flash("Task updated successfully!", "success")
         return redirect(url_for("todos"))
+
     return render_template("edit_todo.html", todo=todo)
 
-@app.route("/todos/delete/<int:todo_id>", methods=["POST"])
-def delete_todo(todo_id):
-    todo = Todo.get_by_id(todo_id)
-    if todo:
-        todo.delete()
-        flash("Task deleted successfully!", "success")
-    return redirect(url_for("todos"))
-
-# ---------------------- FIXED NOTIFICATION CHECK ----------------------
+# ---------------------- NOTIFICATION CHECK ----------------------
 @app.route("/todos/check")
 def check_due_tasks():
     all_todos = Todo.all()
@@ -207,26 +230,18 @@ def check_due_tasks():
     for t in all_todos:
         if not t.due_date:
             continue
-
-        # Convert due_date to datetime
         due_date = datetime.strptime(str(t.due_date), "%Y-%m-%d").date()
-        due_time = None
-        if t.due_time:
-            due_time = datetime.strptime(t.due_time, "%H:%M").time()
+        due_time = datetime.strptime(t.due_time, "%H:%M").time() if t.due_time else None
 
-        # 1. Due today (start of the day until due time)
         if due_date == now.date():
             if not due_time or now < datetime.combine(due_date, due_time):
                 tasks.append(f"{t.task} (due today)")
 
-        # 2. Exact due time
         if due_time:
             due_dt = datetime.combine(due_date, due_time)
-            if abs((now - due_dt).total_seconds()) < 60:
+            if abs((now - due_dt).total_seconds()) < 120:
                 tasks.append(f"{t.task} (due now)")
-
-            # 3. 10 minutes after due time
-            if abs((now - (due_dt + timedelta(minutes=10))).total_seconds()) < 60:
+            if abs((now - (due_dt + timedelta(minutes=10))).total_seconds()) < 120:
                 tasks.append(f"{t.task} (overdue 10 min)")
 
     return jsonify({"tasks": tasks})
@@ -237,6 +252,18 @@ def subscribe():
     subscription_info = request.get_json()
     if subscription_info not in SUBSCRIPTIONS:
         SUBSCRIPTIONS.append(subscription_info)
+
+    with get_db_connection() as conn:
+        conn.execute("""
+            INSERT OR IGNORE INTO subscriptions (endpoint, p256dh, auth)
+            VALUES (?, ?, ?)
+        """, (
+            subscription_info["endpoint"],
+            subscription_info["keys"]["p256dh"],
+            subscription_info["keys"]["auth"]
+        ))
+        conn.commit()
+
     return jsonify({"success": True})
 
 def send_push_notification(subscription, title, body):
@@ -253,12 +280,16 @@ def send_push_notification(subscription, title, body):
 
 @app.route("/test_push")
 def test_push():
-    if not SUBSCRIPTIONS:
+    with get_db_connection() as conn:
+        subs = conn.execute("SELECT * FROM subscriptions").fetchall()
+    if not subs:
         return "No subscriptions yet!"
-    
-    for sub in SUBSCRIPTIONS:
-        send_push_notification(sub, "Test Push", "This is a test notification")
-    
+    for sub in subs:
+        subscription_dict = {
+            "endpoint": sub["endpoint"],
+            "keys": {"p256dh": sub["p256dh"], "auth": sub["auth"]}
+        }
+        send_push_notification(subscription_dict, "Test Push", "This is a test notification")
     return "Push sent!"
 
 @app.context_processor
@@ -266,9 +297,40 @@ def inject_vapid_key():
     return dict(VAPID_PUBLIC_KEY=VAPID_PUBLIC_KEY)
 
 # ---------------------- BACKGROUND SCHEDULER ----------------------
+def check_and_notify():
+    now = datetime.now()
+    all_todos = Todo.all()
+    tasks = []
+
+    for t in all_todos:
+        if not t.due_date:
+            continue
+        due_date = datetime.strptime(str(t.due_date), "%Y-%m-%d").date()
+        due_time = datetime.strptime(t.due_time, "%H:%M").time() if t.due_time else None
+
+        if due_time:
+            due_dt = datetime.combine(due_date, due_time)
+            diff = (now - due_dt).total_seconds()
+
+            if 0 <= diff < 120:   # due now
+                tasks.append(f"{t.task} (due now)")
+            elif 600 <= diff < 720:  # 10 min overdue
+                tasks.append(f"{t.task} (overdue 10 min)")
+
+    if tasks:
+        with get_db_connection() as conn:
+            subs = conn.execute("SELECT * FROM subscriptions").fetchall()
+        for task in tasks:
+            for sub in subs:
+                subscription_dict = {
+                    "endpoint": sub["endpoint"],
+                    "keys": {"p256dh": sub["p256dh"], "auth": sub["auth"]}
+                }
+                send_push_notification(subscription_dict, "Task Reminder", task)
+
 scheduler = BackgroundScheduler(daemon=True)
 if not scheduler.get_jobs():
-    scheduler.add_job(func=lambda: None, trigger="interval", minutes=1)
+    scheduler.add_job(check_and_notify, trigger="interval", minutes=1)
 scheduler.start()
 
 # ---------------------- RUN APP ----------------------
