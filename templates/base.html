@@ -10,12 +10,12 @@
   <header class="site-header">
     <h1>ByeByeLastMinute</h1>
     <nav class="navbar">
-      <a href="{{ url_for('dashboard') }}">Dashboard</a>
-      <a href="{{ url_for('index') }}">Class Management</a>
+      <a href="{{ url_for('home') }}">Overview</a>
+      <a href="{{ url_for('dashboard') }}">Note</a>
+      <a href="{{ url_for('classes') }}">Class Management</a>
       <a href="{{ url_for('timetable') }}">Timetable</a>
       <a href="{{ url_for('todos') }}">To-Do List</a>
       <a href="{{ url_for('calendar_view') }}"> Calendar</a>
-
     </nav>
   </header>
 
@@ -145,5 +145,25 @@
     // Run subscription
     subscribeUser();
   </script>
+  <button id="darkModeToggle" class="theme-toggle">
+        {% if current_theme == 'dark' %}☀ Light Mode{% else %}🌗 Dark Mode{% endif %}
+  </button>
+  <script>
+    document.getElementById('darkModeToggle').addEventListener('click', function() {
+        fetch('/toggle_theme', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Update the theme attribute and button text
+            document.documentElement.setAttribute('data-theme', data.theme);
+            this.textContent = data.button_text;
+        })
+        .catch(error => console.error('Error:', error));
+    });
+    </script>
 </body>
 </html>

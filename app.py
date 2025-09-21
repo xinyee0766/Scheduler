@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_from_directory, session
 import sqlite3
 import os
 from datetime import datetime, timedelta
@@ -46,8 +46,8 @@ def dashboard():
     return render_template("dashboard.html")
 
 # ---------------------- CLASS ROUTES ----------------------
-@app.route("/", methods=["GET"])
-def index():
+@app.route("/classes", methods=["GET"])
+def classes():
     search_query = request.args.get("q", "").strip()
     with get_db_connection() as conn:
         if search_query:
@@ -85,7 +85,7 @@ def add_class():
             conn.commit()
 
         flash("Class added successfully!", "success")
-        return redirect(url_for("index"))
+        return redirect(url_for("classes"))
 
     return render_template("add_class.html")
 
@@ -95,7 +95,7 @@ def edit_class(class_id):
         class_obj = conn.execute("SELECT * FROM classes WHERE id=?", (class_id,)).fetchone()
         if not class_obj:
             flash("Class not found", "error")
-            return redirect(url_for('index'))
+            return redirect(url_for('classes'))
 
         if request.method == 'POST':
             name = request.form.get("name")
@@ -119,7 +119,7 @@ def edit_class(class_id):
             )
             conn.commit()
             flash("Class updated successfully!", "success")
-            return redirect(url_for('index'))
+            return redirect(url_for('classes'))
 
     return render_template('edit_class.html', class_obj=class_obj)
 
@@ -131,7 +131,7 @@ def delete_class(class_id):
             conn.execute("DELETE FROM classes WHERE id=?", (class_id,))
             conn.commit()
             flash("Class deleted successfully!", "success")
-    return redirect(url_for('index'))
+    return redirect(url_for('classes'))
 
 @app.route('/timetable')
 def timetable():
@@ -463,6 +463,47 @@ def todo_details(todo_id):
         return redirect(url_for('calendar_view'))
     
     return render_template('todo_details.html', todo=todo)
+
+@app.route('/')
+def home():
+    current_date = datetime.now().strftime("%A, %B %d, %Y")
+    current_day = datetime.now().strftime("%A")
+    
+    with get_db_connection() as conn:
+        today_classes = conn.execute(
+            "SELECT * FROM classes WHERE day = ? ORDER BY start_time",
+            (current_day,)
+        ).fetchall()
+    
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    today_tasks = []
+    with get_db_connection() as conn:
+        rows = conn.execute(
+            "SELECT * FROM todos WHERE due_date = ? ORDER BY due_time",
+            (today_str,)
+        ).fetchall()
+        today_tasks = [Todo(**dict(row)) for row in rows]
+    
+    completed_tasks = sum(1 for task in today_tasks if task.is_done)
+    
+    return render_template('home.html',
+                         current_date=current_date,
+                         today_classes=today_classes,
+                         today_tasks=today_tasks,
+                         completed_tasks=completed_tasks)
+
+@app.route('/toggle_theme', methods=['POST'])
+def toggle_theme():
+    current_theme = session.get('theme', 'light')
+    new_theme = 'dark' if current_theme == 'light' else 'light'
+    session['theme'] = new_theme
+    return jsonify({'theme': new_theme})
+
+@app.context_processor
+def inject_theme():
+    # Get theme from session or default to light
+    theme = session.get('theme', 'light')
+    return {'current_theme': theme}
     
 # ---------------------- RUN APP ----------------------
 if __name__ == "__main__":
