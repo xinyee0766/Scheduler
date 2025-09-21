@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard-container" style="padding:20px; max-width:1200px; margin:0 auto;">
+  <h2>Dashboard</h2>
+
+  <div id="drop-area" style="border:2px dashed #f7c6c7; border-radius:10px; background:#ffdede; padding:40px; text-align:center; margin-bottom:30px;">
+    <div style="margin-bottom:10px;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="#f7c6c7">
+        <path d="M12 2L5 9h4v6h6V9h4l-7-7zM5 20h14v2H5z"/>
+      </svg>
+    </div>
+    <p style="font-size:16px; color:#333;">Drag & drop your file here</p>
+    <!-- Browse Button -->
+    <p style="margin:10px 0; font-size:14px; color:#333;">
+      or 
+      <label for="fileElem" 
+             style="color:#fff; background:#f7c6c7; padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px; border:1px solid #f5a9ab; display:inline-block; width:auto; min-width:60px; text-align:center;">
+        Browse
+      </label> 
+      from your computer
+    </p>
+    <input type="file" id="fileElem" multiple style="display:none;">
+  </div>
+
+  <!-- Global Edit Button -->
+  <div style="text-align:center; margin-bottom:15px;">
+    <button id="edit-mode" style="background:#f7c6c7; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:13px;">Edit</button>
+  </div>
+
+  <!-- Action Buttons (only show in edit mode) -->
+  <div id="action-buttons" style="margin-bottom:15px; display:none; text-align:center;">
+    <button id="delete-selected" style="background:#d9534f; color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; margin-right:10px;">Delete Selected</button>
+    <button id="delete-all" style="background:#6c757d; color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;">Delete All</button>
+  </div>
+
+  <!-- Uploaded Files List -->
+  <div id="file-list" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap:15px;"></div>
+</div>
+
+<script>
+const dropArea = document.getElementById("drop-area");
+const fileElem = document.getElementById("fileElem");
+const fileList = document.getElementById("file-list");
+const editBtn = document.getElementById("edit-mode");
+const actionButtons = document.getElementById("action-buttons");
+const deleteSelectedBtn = document.getElementById("delete-selected");
+const deleteAllBtn = document.getElementById("delete-all");
+
+let editMode = false;
+
+// Prevent default drag behaviors
+['dragenter','dragover','dragleave','drop'].forEach(eventName => {
+  dropArea.addEventListener(eventName, e => e.preventDefault());
+  document.body.addEventListener(eventName, e => e.preventDefault());
+});
+
+// Handle files
+dropArea.addEventListener("drop", handleFiles);
+fileElem.addEventListener("change", () => handleFiles({ dataTransfer: { files: fileElem.files } }));
+
+function handleFiles(e) {
+  const files = e.dataTransfer.files;
+  for (let i = 0; i < files.length; i++) {
+    previewAndUpload(files[i]);
+  }
+}
+
+function previewAndUpload(file) {
+  const container = document.createElement("div");
+  container.style.position = "relative";
+  container.style.textAlign = "center";
+  container.style.fontSize = "12px";
+  container.classList.add("file-item");
+
+  let previewElement;
+  if (file.type.startsWith("image/")) {
+    previewElement = document.createElement("img");
+    previewElement.src = URL.createObjectURL(file);
+    previewElement.style.maxWidth = "100%";
+    previewElement.style.height = "120px";
+    previewElement.style.objectFit = "cover";
+    previewElement.style.border = "1px solid #ddd";
+    previewElement.style.borderRadius = "6px";
+    previewElement.style.marginBottom = "5px";
+  } else if (file.type === "application/pdf") {
+    previewElement = document.createElement("iframe");
+    previewElement.src = URL.createObjectURL(file);
+    previewElement.style.width = "100%";
+    previewElement.style.height = "120px";
+    previewElement.style.border = "1px solid #ddd";
+    previewElement.style.borderRadius = "6px";
+    previewElement.style.marginBottom = "5px";
+  } else {
+    previewElement = document.createElement("div");
+    previewElement.textContent = "File uploaded";
+    previewElement.style.color = "#555";
+    previewElement.style.border = "1px solid #ddd";
+    previewElement.style.borderRadius = "6px";
+    previewElement.style.height = "120px";
+    previewElement.style.display = "flex";
+    previewElement.style.alignItems = "center";
+    previewElement.style.justifyContent = "center";
+    previewElement.style.marginBottom = "5px";
+  }
+
+  // Filename link (downloadable)
+  const filenameLink = document.createElement("a");
+  filenameLink.textContent = file.name;
+  filenameLink.href = URL.createObjectURL(file);
+  filenameLink.download = file.name;
+  filenameLink.style.display = "block";
+  filenameLink.style.color = "#007bff";
+  filenameLink.style.textDecoration = "none";
+  filenameLink.style.wordBreak = "break-word";
+
+  // Checkbox (hidden initially)
+  const checkbox = document.createElement("input");
+  checkbox.type = "checkbox";
+  checkbox.style.position = "absolute";
+  checkbox.style.top = "5px";
+  checkbox.style.left = "5px";
+  checkbox.style.display = "none";
+
+  container.appendChild(previewElement);
+  container.appendChild(filenameLink);
+  container.appendChild(checkbox);
+  fileList.appendChild(container);
+
+  // Upload file
+  const formData = new FormData();
+  formData.append("files[]", file);
+
+  fetch("/dashboard/upload", { method: "POST", body: formData })
+    .then(response => response.json())
+    .then(data => {
+      if (data.uploaded && data.uploaded.length > 0) {
+        const uploadedPath = "/uploads/" + encodeURIComponent(data.uploaded[0]);
+        filenameLink.href = uploadedPath;
+        filenameLink.setAttribute("download", data.uploaded[0]);
+        if (file.type.startsWith("image/") || file.type === "application/pdf") {
+          previewElement.src = uploadedPath;
+        }
+      }
+    })
+    .catch(err => console.error("Upload failed:", err));
+}
+
+// Toggle edit mode
+editBtn.addEventListener("click", () => {
+  editMode = !editMode;
+  document.querySelectorAll("#file-list input[type='checkbox']").forEach(cb => {
+    cb.style.display = editMode ? "block" : "none";
+    cb.checked = false;
+  });
+  actionButtons.style.display = editMode ? "block" : "none";
+  editBtn.textContent = editMode ? "Cancel" : "Edit";
+});
+
+// Delete selected files
+deleteSelectedBtn.addEventListener("click", () => {
+  document.querySelectorAll("#file-list input[type='checkbox']:checked").forEach(cb => {
+    cb.parentElement.remove();
+  });
+});
+
+// Delete all files
+deleteAllBtn.addEventListener("click", () => {
+  fileList.innerHTML = "";
+});
+</script>
+{% endblock %}
