@@ -121,3 +121,26 @@ class Todo:
     def delete(self):
         with get_db_connection() as conn:
             conn.execute("DELETE FROM todos WHERE id=?", (self.id,))
+
+    def get_events_for_date(date):
+        """Get tasks/events for a specific date from the database"""
+        date_str = date.strftime("%Y-%m-%d")
+    
+        with get_db_connection() as conn:
+        # Get todos for this date
+            rows = conn.execute(
+                "SELECT * FROM todos WHERE due_date = ? ORDER BY due_time",
+                (date_str,)
+            ).fetchall()
+        
+            events = []
+            for row in rows:
+                todo = Todo(**dict(row))
+                events.append({
+                    'id': todo.id,
+                    'title': todo.task,
+                    'time': todo.due_time if todo.due_time else 'All Day',
+                    'color': '#FFD6BA' if not todo.is_done else '#888888'  # Different color for completed tasks
+                })
+        
+            return events
