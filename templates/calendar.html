@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Calendar View{% endblock %}
+
+{% block content %}
+<main class="container">
+  <h1>Calendar View - {{ month_name }} {{ year }}</h1>
+  
+  <!-- Month Navigation -->
+  <div class="calendar-nav">
+    <a href="/calendar?year={{ prev_year }}&month={{ prev_month }}" class="nav-btn">&larr; Previous</a>
+    <span class="current-month">{{ month_name }} {{ year }}</span>
+    <a href="/calendar?year={{ next_year }}&month={{ next_month }}" class="nav-btn">Next &rarr;</a>
+  </div>
+
+  <!-- Calendar Table -->
+  <table class="html-calendar">
+    <thead>
+      <tr>
+        <th>Sun</th>
+        <th>Mon</th>
+        <th>Tue</th>
+        <th>Wed</th>
+        <th>Thu</th>
+        <th>Fri</th>
+        <th>Sat</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for week in calendar %}
+      <tr>
+        {% for day in week %}
+        <td class="{% if not day.current_month %}other-month{% endif %} {% if day.is_today %}today{% endif %}">
+          <div class="day-number">{{ day.day }}</div>
+          <div class="events">
+            {% for event in day.events %}
+            <div class="event-item">
+              <a href="/edit_todo/{{ event.id }}" class="event-link">
+                {{ event.title }}
+                {% if event.time %}
+                <small>({{ event.time }})</small>
+                {% endif %}
+              </a>
+            </div>
+            {% endfor %}
+          </div>
+        </td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</main>
+{% endblock %}

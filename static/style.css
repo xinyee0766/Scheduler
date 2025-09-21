@@ -661,3 +661,136 @@ td strong {
   height: 80vh;  /* adjust as needed */
   border: none;
 }
+
+.calendar-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 20px 0;
+    padding: 15px;
+    background: #FFD6BA;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.nav-btn {
+    padding: 10px 20px;
+    background: #ff8c66;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: background 0.3s;
+}
+
+.nav-btn:hover {
+    background: #e67350;
+}
+
+.current-month {
+    font-size: 1.4em;
+    font-weight: bold;
+    color: #000;
+}
+
+.html-calendar {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.html-calendar th {
+    background: #FFD6BA;
+    color: #000;
+    padding: 16px;
+    text-align: center;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 14px;
+    border: 1px solid #FFC8A8;
+}
+
+.html-calendar td {
+    border: 1px solid #FFE0D2;
+    padding: 12px;
+    vertical-align: top;
+    height: 120px;
+    background: #fff;
+}
+
+.html-calendar .other-month {
+    background: #FFF2EB;
+    color: #A8A8A8;
+}
+
+.html-calendar .today {
+    background: #FFE0D2;
+    font-weight: bold;
+}
+
+.day-number {
+    font-size: 1.1em;
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #000;
+}
+
+.event-item {
+    margin: 4px 0;
+    padding: 6px;
+    background: #FFF2EB;
+    border-radius: 6px;
+    font-size: 0.85em;
+    border-left: 3px solid #ff8c66;
+}
+
+.event-link {
+    color: #000;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.event-link:hover {
+    color: #ff8c66;
+    text-decoration: underline;
+}
+
+.events small {
+    color: #666;
+    font-size: 0.75em;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .calendar-nav {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+    
+    .nav-btn {
+        padding: 8px 16px;
+        font-size: 0.9em;
+    }
+    
+    .current-month {
+        font-size: 1.2em;
+    }
+    
+    .html-calendar td {
+        height: 80px;
+        padding: 8px;
+    }
+    
+    .event-item {
+        font-size: 0.75em;
+        padding: 4px;
+    }
+    
+    .day-number {
+        font-size: 1em;
+    }
+}
