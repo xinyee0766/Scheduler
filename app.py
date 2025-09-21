@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_from_directory
 import sqlite3
 import os
 from datetime import datetime, timedelta
@@ -7,10 +7,15 @@ from config import VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY
 from pywebpush import webpush, WebPushException
 from apscheduler.schedulers.background import BackgroundScheduler
 import json
+from werkzeug.utils import secure_filename
+
+UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), "uploads")
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # create folder if it doesn't exist
 
 # ---------------------- APP SETUP ----------------------
 app = Flask(__name__)
 app.secret_key = "xinyee0766"
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 DB_NAME = os.path.join(os.path.dirname(__file__), 'classes.db')
 SUBSCRIPTIONS = []  # kept for backward compatibility
@@ -34,6 +39,10 @@ with get_db_connection() as conn:
         )
     """)
     conn.commit()
+
+@app.route("/dashboard")
+def dashboard():
+    return render_template("dashboard.html")
 
 # ---------------------- CLASS ROUTES ----------------------
 @app.route("/", methods=["GET"])
@@ -173,6 +182,7 @@ def todos():
         all_todos = Todo.all()
         return render_template("todos.html", todos=all_todos)
 
+
 @app.route("/todos/add", methods=["GET", "POST"])
 def add_todo():
     if request.method == "POST":
@@ -190,6 +200,7 @@ def add_todo():
         flash("Task added successfully!", "success")
         return redirect(url_for("todos"))
     return render_template("add_todo.html")
+
 
 @app.route("/todos/edit/<int:todo_id>", methods=["GET", "POST"])
 def edit_todo(todo_id):
@@ -219,6 +230,19 @@ def edit_todo(todo_id):
         return redirect(url_for("todos"))
 
     return render_template("edit_todo.html", todo=todo)
+
+
+# ✅ NEW ROUTE ADDED
+@app.route("/todos/delete/<int:todo_id>", methods=["POST"])
+def delete_todo(todo_id):
+    todo = Todo.get_by_id(todo_id)
+    if not todo:
+        flash("Task not found.", "error")
+        return redirect(url_for("todos"))
+
+    todo.delete()
+    flash("Task deleted successfully!", "success")
+    return redirect(url_for("todos"))
 
 # ---------------------- NOTIFICATION CHECK ----------------------
 @app.route("/todos/check")
@@ -332,6 +356,26 @@ scheduler = BackgroundScheduler(daemon=True)
 if not scheduler.get_jobs():
     scheduler.add_job(check_and_notify, trigger="interval", minutes=1)
 scheduler.start()
+
+@app.route("/dashboard/upload", methods=["POST"])
+def upload_files():
+    # Get all files from the request
+    files = request.files.getlist("files[]")
+    saved_files = []
+
+    for f in files:
+        if f.filename == "":
+            continue
+        filename = secure_filename(f.filename)
+        save_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        f.save(save_path)
+        saved_files.append(filename)
+
+    return jsonify({"uploaded": saved_files})
+
+@app.route("/uploads/<filename>")
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 # ---------------------- RUN APP ----------------------
 if __name__ == "__main__":
