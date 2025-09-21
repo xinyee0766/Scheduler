@@ -846,3 +846,32 @@ td strong {
     gap: 10px;
     margin-top: 10px;
 }
+
+/* View Task button styling */
+.view-task-btn {
+    display: inline-block;
+    padding: 2px 6px;
+    background: #ff8c66;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 0.7em;
+    font-weight: 500;
+    margin-top: 3px;
+    transition: background 0.3s;
+}
+
+.view-task-btn:hover {
+    background: #e67350;
+    color: white;
+}
+
+.event-item {
+    margin: 2px 0;
+    padding: 4px;
+    background: #FFF2EB;
+    border-radius: 4px;
+    font-size: 0.8em;
+    border-left: 2px solid #ff8c66;
+    position: relative;
+}

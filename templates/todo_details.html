@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Task Details - {{ todo.task }}{% endblock %}
+
+{% block content %}
+<main class="container">
+  <h1>Task Details</h1>
+
+  <div class="task-details">
+    <div class="detail-item">
+      <strong>Task:</strong>
+      <span>{{ todo.task }}</span>
+    </div>
+    
+    <div class="detail-item">
+      <strong>Due Date:</strong>
+      <span>{{ todo.due_date }}</span>
+    </div>
+    
+    <div class="detail-item">
+      <strong>Due Time:</strong>
+      <span>{{ todo.due_time or 'No specific time' }}</span>
+    </div>
+    
+    <div class="detail-item">
+      <strong>Status:</strong>
+      <span class="{% if todo.is_done %}status-done{% else %}status-pending{% endif %}">
+        {% if todo.is_done %}Completed{% else %}Pending{% endif %}
+      </span>
+    </div>
+  </div>
+
+  <div class="actions">
+    <a href="{{ url_for('edit_todo', todo_id=todo.id) }}" class="button">Edit Task</a>
+    <a href="{{ url_for('calendar_view') }}" class="button secondary">Back to Calendar</a>
+    <a href="{{ url_for('todos') }}" class="button secondary">View All Tasks</a>
+  </div>
+</main>
+
+<style>
+.task-details {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    margin: 2rem 0;
+}
+
+.detail-item {
+    display: flex;
+    margin-bottom: 1rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+.detail-item strong {
+    min-width: 120px;
+    color: #333;
+}
+
+.detail-item span {
+    color: #666;
+}
+
+.status-done {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.status-pending {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+}
+</style>
+{% endblock %}

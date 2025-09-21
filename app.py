@@ -455,6 +455,15 @@ def get_events_for_date(date):
         
         return events
     
+@app.route('/todo_details/<int:todo_id>')
+def todo_details(todo_id):
+    todo = Todo.get_by_id(todo_id)
+    if not todo:
+        flash("Task not found", "error")
+        return redirect(url_for('calendar_view'))
+    
+    return render_template('todo_details.html', todo=todo)
+    
 # ---------------------- RUN APP ----------------------
 if __name__ == "__main__":
     app.run(debug=True, use_reloader=False)
