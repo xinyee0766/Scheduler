@@ -655,3 +655,9 @@ td strong {
 .search-form button.primary:hover {
   background-color: #e67350;
 }
+
+.tab-iframe {
+  width: 100%;
+  height: 80vh;  /* adjust as needed */
+  border: none;
+}
