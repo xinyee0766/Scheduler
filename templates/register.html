@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Register - ByeByeLastMinute{% endblock %}
+
+{% block content %}
+<main class="container">
+  <h1>Create Account</h1>
+  
+  <form method="POST" class="grid">
+    <label>
+      Username
+      <input type="text" name="username" placeholder="Enter your username" required>
+    </label>
+    
+    <label>
+      Password
+      <input type="password" name="password" placeholder="Enter your password" required>
+    </label>
+    
+    <div class="actions">
+      <button type="submit" class="button">Register</button>
+      <a href="{{ url_for('login') }}" class="button secondary">Already have an account? Login</a>
+    </div>
+  </form>
+</main>
+
+<style>
+  .grid {
+    max-width: 400px;
+    margin: 0 auto;
+  }
+  
+  .actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+  }
+</style>
+{% endblock %}
