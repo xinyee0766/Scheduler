@@ -491,19 +491,6 @@ def home():
                          today_classes=today_classes,
                          today_tasks=today_tasks,
                          completed_tasks=completed_tasks)
-
-@app.route('/toggle_theme', methods=['POST'])
-def toggle_theme():
-    current_theme = session.get('theme', 'light')
-    new_theme = 'dark' if current_theme == 'light' else 'light'
-    session['theme'] = new_theme
-    return jsonify({'theme': new_theme})
-
-@app.context_processor
-def inject_theme():
-    # Get theme from session or default to light
-    theme = session.get('theme', 'light')
-    return {'current_theme': theme}
     
 # ---------------------- RUN APP ----------------------
 if __name__ == "__main__":
