@@ -1,0 +1,310 @@
+/* ===== Body & Background ===== */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  color: #000;
+  background-color: #FFF2EB;
+  background-image: url("Dashboard Background Image.avif");
+  background-repeat: no-repeat;
+  background-size: 900px auto;
+  background-position: center;
+  background-attachment: fixed;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+/* 🌙 Dark Mode Body */
+html[data-theme="dark"] body {
+  background-color: #222;
+  background-image:
+    linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)),
+    url("Dashboard Background Image.avif");
+  background-repeat: no-repeat;
+  background-size: 900px auto;
+  background-position: center;
+  background-attachment: fixed;
+  color: #eee;
+}
+
+/* ===== Header ===== */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background-color: #FFDCDC;
+  color: #000;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+html[data-theme="dark"] header {
+  background-color: #111;
+  color: #fff;
+}
+
+#darkModeToggle {
+  background-color: #ddd;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+html[data-theme="dark"] #darkModeToggle {
+  background-color: #444;
+  color: #fff;
+}
+
+/* ===== Navigation ===== */
+nav {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  padding: 0.5rem;
+  background-color: #FFD6BA;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+html[data-theme="dark"] nav {
+  background-color: #333;
+  color: #fff;
+}
+
+.tab-btn {
+  background: #e0e0e0;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+html[data-theme="dark"] .tab-btn {
+  background-color: #444;
+  color: #fff;
+}
+
+.tab-btn.active {
+  background: #ccc;
+}
+
+html[data-theme="dark"] .tab-btn.active {
+  background-color: #666;
+}
+
+/* ===== Sections ===== */
+.section {
+  display: none;
+  padding: 1rem;
+}
+
+.section.active {
+  display: block;
+}
+
+/* ===== File Preview Grid ===== */
+#preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.preview-item {
+  width: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #fff;
+  border-radius: 8px;
+  padding: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  box-sizing: border-box;
+  transition: background 0.3s, color 0.3s;
+}
+
+html[data-theme="dark"] .preview-item {
+  background: #2a2a2a;
+  color: #eee;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+
+/* Preview visuals */
+.preview-link img,
+.preview-link canvas {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 6px;
+  display: block;
+}
+
+.preview-link .file-icon {
+  width: 100%;
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  border-radius: 6px;
+  background: #f6f6f6;
+}
+
+html[data-theme="dark"] .preview-link .file-icon {
+  background: #444;
+  color: #fff;
+}
+
+/* Caption (filename + size) under the preview */
+.preview-caption {
+  width: 100%;
+  margin-top: 8px;
+  text-align: center;
+}
+
+.file-name {
+  display: block;
+  font-size: 13px;
+  color: #0b69ff;
+  text-decoration: none;
+  word-break: break-word;
+  max-height: 40px;
+  overflow: hidden;
+}
+
+html[data-theme="dark"] .file-name {
+  color: #4da3ff;
+}
+
+.file-size {
+  font-size: 12px;
+  color: #666;
+  margin-top: 4px;
+}
+
+html[data-theme="dark"] .file-size {
+  color: #aaa;
+}
+
+/* ===== Drag & Drop Zone ===== */
+#dropzone {
+  border: 2px dashed #ffb5a7;
+  border-radius: 12px;
+  padding: 40px 20px;
+  background: #fcd5ce;
+  color: #333;
+  text-align: center;
+  cursor: pointer;
+
+  max-width: 500px;
+  margin: 20px auto;
+  transition: all 0.3s ease;
+}
+
+#dropzone.dragover {
+  border-color: #ffb5a7;
+  background: #eef5ff;
+}
+
+/* 🌙 Dark mode dropzone */
+html[data-theme="dark"] #dropzone {
+  border: 2px dashed #888;
+  background: #2a2a2a;
+  color: #eee;
+}
+
+html[data-theme="dark"] #dropzone.dragover {
+  border-color: #aaa;
+  background: #444;
+}
+
+.dropzone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.upload-icon {
+  font-size: 40px;
+  margin-bottom: 8px;
+  color: #ffb5a7;
+}
+
+html[data-theme="dark"] .upload-icon {
+  color: #bbb;
+}
+
+.dropzone-content p {
+  margin: 0;
+  font-size: 15px;
+  color: #555;
+}
+
+html[data-theme="dark"] .dropzone-content p {
+  color: #ccc;
+}
+
+.dropzone-content .small {
+  font-size: 13px;
+  color: #777;
+}
+
+html[data-theme="dark"] .dropzone-content .small {
+  color: #aaa;
+}
+
+/* Browse button */
+.browse-btn {
+  background: #ffb5a7;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.browse-btn:hover {
+  background: #e8a598;
+}
+
+html[data-theme="dark"] .browse-btn {
+  background: #666;
+  color: #fff;
+}
+
+html[data-theme="dark"] .browse-btn:hover {
+  background: #777;
+}
+/* Action buttons */
+.file-actions {
+  margin: 10px 0;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+/* Checkbox for edit mode */
+.preview-checkbox {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+/* Show checkboxes when in edit mode */
+.edit-mode .preview-checkbox {
+  display: block;
+}
+
+/* Position wrapper for previews */
+.preview-item {
+  position: relative;
+}
