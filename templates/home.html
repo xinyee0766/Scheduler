@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Today's Overview{% endblock %}
+
+{% block content %}
+<main class="container">
+  <h1>Today's Overview - {{ current_date }}</h1>
+  
+  <!-- Today's Summary -->
+  <div class="today-summary">
+    <div class="summary-card">
+      <div class="summary-icon"></div>
+      <div class="summary-content">
+        <h3>{{ today_classes|length }}</h3>
+        <p>Classes Today</p>
+      </div>
+    </div>
+    
+    <div class="summary-card">
+      <div class="summary-icon"></div>
+      <div class="summary-content">
+        <h3>{{ today_tasks|length }}</h3>
+        <p>Tasks Due Today</p>
+      </div>
+    </div>
+    
+    <div class="summary-card">
+      <div class="summary-icon"></div>
+      <div class="summary-content">
+        <h3>{{ completed_tasks }}/{{ today_tasks|length }}</h3>
+        <p>Tasks Completed</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Two Column Layout -->
+  <div class="overview-columns">
+    <!-- Today's Classes -->
+    <div class="overview-section">
+      <h2>Today's Classes</h2>
+      {% if today_classes %}
+        <div class="class-list">
+          {% for class in today_classes %}
+          <div class="class-item">
+            <div class="class-time">
+              <span class="time-range">{{ class.start_time }} - {{ class.end_time }}</span>
+            </div>
+            <div class="class-details">
+              <h4>{{ class.name }}</h4>
+              <p class="class-location">{{ class.location }}</p>
+              {% if class.notes %}
+              <p class="class-notes">{{ class.notes }}</p>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <p>No classes scheduled for today! </p>
+          <a href="{{ url_for('add_class') }}" class="button secondary">Add a Class</a>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Today's Tasks -->
+    <div class="overview-section">
+      <h2>Today's Tasks</h2>
+      {% if today_tasks %}
+        <div class="task-list">
+          {% for task in today_tasks %}
+          <div class="task-item {% if task.is_done %}completed{% endif %}">
+            <div class="task-checkbox">
+              <input type="checkbox" {% if task.is_done %}checked{% endif %} disabled>
+            </div>
+            <div class="task-details">
+              <h4>{{ task.task }}</h4>
+              <p class="task-time">
+                {% if task.due_time %}
+                {{ task.due_time }}
+                {% else %}
+                All Day
+                {% endif %}
+              </p>
+            </div>
+            <div class="task-actions">
+              <a href="{{ url_for('edit_todo', todo_id=task.id) }}" class="small-btn">Edit</a>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <p>No tasks due today! </p>
+          <a href="{{ url_for('add_todo') }}" class="button secondary">Add a Task</a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="quick-actions">
+    <h2>Quick Actions</h2>
+    <div class="action-buttons">
+      <a href="{{ url_for('add_class') }}" class="button secondary">Add Class</a>
+      <a href="{{ url_for('add_todo') }}" class="button secondary">Add Task</a>
+      <a href="{{ url_for('calendar_view') }}" class="button secondary">View Calendar</a>
+      <a href="{{ url_for('timetable') }}" class="button secondary">View Timetable</a>
+    </div>
+  </div>
+</main>
+{% endblock %}

@@ -10,7 +10,7 @@
     <input type="text" name="q" placeholder="Search by class name..." value="{{ search_query or '' }}">
     <button type="submit">Search</button>
     {% if search_query %}
-      <a href="{{ url_for('index') }}" class="secondary">Clear Search</a>
+      <a href="{{ url_for('classes') }}" class="secondary">Clear Search</a>
     {% endif %}
   </form>
 
