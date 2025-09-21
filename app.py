@@ -197,10 +197,39 @@ def delete_todo(todo_id):
         flash("Task deleted successfully!", "success")
     return redirect(url_for("todos"))
 
+# ---------------------- FIXED NOTIFICATION CHECK ----------------------
 @app.route("/todos/check")
-def check_todos():
-    due_today = Todo.get_due_today()
-    return {"tasks": [t.task for t in due_today]}
+def check_due_tasks():
+    all_todos = Todo.all()
+    now = datetime.now()
+    tasks = []
+
+    for t in all_todos:
+        if not t.due_date:
+            continue
+
+        # Convert due_date to datetime
+        due_date = datetime.strptime(str(t.due_date), "%Y-%m-%d").date()
+        due_time = None
+        if t.due_time:
+            due_time = datetime.strptime(t.due_time, "%H:%M").time()
+
+        # 1. Due today (start of the day until due time)
+        if due_date == now.date():
+            if not due_time or now < datetime.combine(due_date, due_time):
+                tasks.append(f"{t.task} (due today)")
+
+        # 2. Exact due time
+        if due_time:
+            due_dt = datetime.combine(due_date, due_time)
+            if abs((now - due_dt).total_seconds()) < 60:
+                tasks.append(f"{t.task} (due now)")
+
+            # 3. 10 minutes after due time
+            if abs((now - (due_dt + timedelta(minutes=10))).total_seconds()) < 60:
+                tasks.append(f"{t.task} (overdue 10 min)")
+
+    return jsonify({"tasks": tasks})
 
 # ---------------------- PUSH NOTIFICATIONS ----------------------
 @app.route("/subscribe", methods=["POST"])
@@ -222,7 +251,6 @@ def send_push_notification(subscription, title, body):
     except WebPushException as ex:
         print("Push failed:", ex)
 
-# ---------------------- TEST PUSH ROUTE ----------------------
 @app.route("/test_push")
 def test_push():
     if not SUBSCRIPTIONS:
@@ -233,49 +261,6 @@ def test_push():
     
     return "Push sent!"
 
-notified_log = set()
-
-def notify_due_tasks():
-    now = datetime.now()
-    due_today = Todo.get_due_today()
-
-    for task in due_today:
-        task_id = getattr(task, "id", task.task)
-
-        # Start-of-day notification
-        if now.hour == 0 and now.minute == 0:
-            key = (task_id, "start")
-            if key not in notified_log:
-                title = "Task Due Today"
-                body = f"{task.task} is due today!"
-                for sub in SUBSCRIPTIONS:
-                    send_push_notification(sub, title, body)
-                notified_log.add(key)
-
-        if task.due_time:
-            due_dt = datetime.combine(task.due_date, datetime.strptime(task.due_time, "%H:%M").time())
-            diff_seconds = (now - due_dt).total_seconds()
-
-            # Exact due time
-            if 0 <= diff_seconds < 60:
-                key = (task_id, "due")
-                if key not in notified_log:
-                    title = "Task Due Now"
-                    body = f"{task.task} is due!"
-                    for sub in SUBSCRIPTIONS:
-                        send_push_notification(sub, title, body)
-                    notified_log.add(key)
-
-            # 10 minutes overdue
-            elif 600 <= diff_seconds < 660:
-                key = (task_id, "overdue10")
-                if key not in notified_log:
-                    title = "Task Overdue"
-                    body = f"{task.task} is overdue by 10 minutes!"
-                    for sub in SUBSCRIPTIONS:
-                        send_push_notification(sub, title, body)
-                    notified_log.add(key)
-
 @app.context_processor
 def inject_vapid_key():
     return dict(VAPID_PUBLIC_KEY=VAPID_PUBLIC_KEY)
@@ -283,7 +268,7 @@ def inject_vapid_key():
 # ---------------------- BACKGROUND SCHEDULER ----------------------
 scheduler = BackgroundScheduler(daemon=True)
 if not scheduler.get_jobs():
-    scheduler.add_job(func=notify_due_tasks, trigger="interval", minutes=1)
+    scheduler.add_job(func=lambda: None, trigger="interval", minutes=1)
 scheduler.start()
 
 # ---------------------- RUN APP ----------------------
