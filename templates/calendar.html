@@ -5,14 +5,17 @@
 <main class="container">
   <h1>Calendar View - {{ month_name }} {{ year }}</h1>
   
-  <!-- Month Navigation -->
+  <div class="actions" style="margin-bottom: 20px;">
+    <a href="{{ url_for('add_todo') }}" class="button secondary">Add New Task</a>
+    <a href="{{ url_for('todos') }}" class="button secondary">View as List</a>
+  </div>
+
   <div class="calendar-nav">
     <a href="/calendar?year={{ prev_year }}&month={{ prev_month }}" class="nav-btn">&larr; Previous</a>
     <span class="current-month">{{ month_name }} {{ year }}</span>
     <a href="/calendar?year={{ next_year }}&month={{ next_month }}" class="nav-btn">Next &rarr;</a>
   </div>
 
-  <!-- Calendar Table -->
   <table class="html-calendar">
     <thead>
       <tr>
@@ -36,7 +39,7 @@
             <div class="event-item">
               <a href="/edit_todo/{{ event.id }}" class="event-link">
                 {{ event.title }}
-                {% if event.time %}
+                {% if event.time and event.time != 'All Day' %}
                 <small>({{ event.time }})</small>
                 {% endif %}
               </a>
