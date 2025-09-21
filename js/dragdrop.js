@@ -121,7 +121,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     deleteSelectedBtn.style.display = editMode ? "inline-block" : "none";
     deleteAllBtn.style.display = editMode ? "inline-block" : "none";
-    editToggle.textContent = editMode ? "✅ Done" : "✏️ Edit";
+    editToggle.textContent = editMode ? "✅ Done" : "✏ Edit";
   });
 
   deleteSelectedBtn.addEventListener("click", () => {
@@ -135,5 +135,5 @@ document.addEventListener("DOMContentLoaded", () => {
   deleteAllBtn.addEventListener("click", () => {
     uploadedFiles = [];
     renderPreviews();
-  });
+  });
 });

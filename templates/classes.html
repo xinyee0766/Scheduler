@@ -6,7 +6,6 @@
 <main class="container">
   <h1>Class Management</h1>
 
-  <!-- Search form -->
   <form method="GET" class="search-form">
     <input type="text" name="q" placeholder="Search by class name..." value="{{ search_query or '' }}">
     <button type="submit">Search</button>
@@ -15,13 +14,11 @@
     {% endif %}
   </form>
 
-  <!-- Action buttons -->
   <div class="actions">
     <a href="{{ url_for('add_class') }}" class="button secondary">Add New Class</a>
     <a href="{{ url_for('timetable') }}" class="button secondary">View Timetable</a>
   </div>
 
-  <!-- Classes table -->
   {% if classes %}
     <table border="1" cellpadding="8" cellspacing="0">
       <thead>

@@ -3,7 +3,7 @@
   // Helper to set the button label
   function updateButtonLabel(btn, theme) {
     if (!btn) return;
-    btn.textContent = theme === "dark" ? "☀️ Light Mode" : "🌗 Dark Mode";
+    btn.textContent = theme === "dark" ? "☀ Light Mode" : "🌗 Dark Mode";
   }
 
   function init() {
@@ -37,5 +37,5 @@
     document.addEventListener("DOMContentLoaded", init);
   } else {
     init();
-  }
+  }
 })();
