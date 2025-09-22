@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <title>{% block title %}ByeByeLastMinute{% endblock %}</title>
@@ -7,16 +7,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 </head>
 <body>
+  <!-- Header and Navbar -->
   <header class="site-header">
     <h1>ByeByeLastMinute</h1>
     <nav class="navbar">
-      <a href="{{ url_for('dashboard') }}">Dashboard</a>
-      <a href="{{ url_for('index') }}">Class Management</a>
+      <a href="{{ url_for('home') }}">Overview</a>
+      <a href="{{ url_for('dashboard') }}">Note</a>
+      <a href="{{ url_for('classes') }}">Class Management</a>
       <a href="{{ url_for('timetable') }}">Timetable</a>
       <a href="{{ url_for('todos') }}">To-Do List</a>
+      <a href="{{ url_for('calendar_view') }}">Calendar</a>
+      <button id="themeToggle">🌙 Dark Mode</button>
+
     </nav>
   </header>
 
+  <!-- Main Content -->
   <main class="container">
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
@@ -31,7 +37,7 @@
     {% block content %}{% endblock %}
   </main>
 
-  <!-- Request Notification Permission -->
+  <!-- Notification Permission -->
   <script>
     if ("Notification" in window) {
       if (Notification.permission !== "granted" && Notification.permission !== "denied") {
@@ -42,7 +48,7 @@
     }
   </script>
 
-  <!-- Register Service Worker -->
+  <!-- Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/static/service-worker.js')
@@ -85,7 +91,6 @@
 
   <!-- Push subscription -->
   <script>
-    // Needed to convert VAPID key for PushManager
     function urlBase64ToUint8Array(base64String) {
       const padding = '='.repeat((4 - base64String.length % 4) % 4);
       const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
@@ -94,54 +99,31 @@
     }
 
     async function subscribeUser() {
-      console.log("🚀 Starting subscription process...");
-
-      if (!("serviceWorker" in navigator && "PushManager" in window)) {
-        console.log("❌ Push not supported");
-        return;
-      }
-
       try {
         const reg = await navigator.serviceWorker.ready;
-        console.log("✅ Service Worker ready");
-
         let sub = await reg.pushManager.getSubscription();
-        console.log("📡 Current subscription:", sub);
-
         if (!sub) {
-          console.log("🔐 Subscribing with VAPID key...");
           const vapidKey = "{{ VAPID_PUBLIC_KEY }}";
-          if (!vapidKey || vapidKey.includes("VAPID")) {
-            console.error("❌ VAPID_PUBLIC_KEY not injected! Check Flask context_processor.");
-            return;
-          }
-
           sub = await reg.pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey: urlBase64ToUint8Array(vapidKey)
           });
-          console.log("✅ Subscribed!", sub);
         }
 
-        console.log("📤 Sending subscription to backend...");
-        const response = await fetch("/subscribe", {
+        await fetch("/subscribe", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(sub)
         });
-
-        if (response.ok) {
-          console.log("✅ Subscription sent to Flask!");
-        } else {
-          console.error("❌ Failed to send subscription:", await response.text());
-        }
       } catch (err) {
-        console.error("💥 Subscription error:", err);
+        console.error("Subscription error:", err);
       }
     }
 
-    // Run subscription
     subscribeUser();
   </script>
+ <!-- Dark mode toggle -->
+ <script src="{{ url_for('static', filename='darkModeToggle.js') }}" defer></script>
+
 </body>
 </html>

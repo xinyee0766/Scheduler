@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_from_directory, session
 import sqlite3
 import os
 from datetime import datetime, timedelta
@@ -8,6 +8,7 @@ from pywebpush import webpush, WebPushException
 from apscheduler.schedulers.background import BackgroundScheduler
 import json
 from werkzeug.utils import secure_filename
+import calendar as cal
 
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), "uploads")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # create folder if it doesn't exist
@@ -45,8 +46,8 @@ def dashboard():
     return render_template("dashboard.html")
 
 # ---------------------- CLASS ROUTES ----------------------
-@app.route("/", methods=["GET"])
-def index():
+@app.route("/classes", methods=["GET"])
+def classes():
     search_query = request.args.get("q", "").strip()
     with get_db_connection() as conn:
         if search_query:
@@ -84,7 +85,7 @@ def add_class():
             conn.commit()
 
         flash("Class added successfully!", "success")
-        return redirect(url_for("index"))
+        return redirect(url_for("classes"))
 
     return render_template("add_class.html")
 
@@ -94,7 +95,7 @@ def edit_class(class_id):
         class_obj = conn.execute("SELECT * FROM classes WHERE id=?", (class_id,)).fetchone()
         if not class_obj:
             flash("Class not found", "error")
-            return redirect(url_for('index'))
+            return redirect(url_for('classes'))
 
         if request.method == 'POST':
             name = request.form.get("name")
@@ -118,7 +119,7 @@ def edit_class(class_id):
             )
             conn.commit()
             flash("Class updated successfully!", "success")
-            return redirect(url_for('index'))
+            return redirect(url_for('classes'))
 
     return render_template('edit_class.html', class_obj=class_obj)
 
@@ -130,7 +131,7 @@ def delete_class(class_id):
             conn.execute("DELETE FROM classes WHERE id=?", (class_id,))
             conn.commit()
             flash("Class deleted successfully!", "success")
-    return redirect(url_for('index'))
+    return redirect(url_for('classes'))
 
 @app.route('/timetable')
 def timetable():
@@ -377,6 +378,120 @@ def upload_files():
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
+@app.route('/calendar')
+def calendar_view():
+    # Get current year and month from query parameters or use current date
+    year = int(request.args.get('year', datetime.now().year))
+    month = int(request.args.get('month', datetime.now().month))
+    
+    # Calculate previous and next month
+    if month == 1:
+        prev_year, prev_month = year - 1, 12
+    else:
+        prev_year, prev_month = year, month - 1
+        
+    if month == 12:
+        next_year, next_month = year + 1, 1
+    else:
+        next_year, next_month = year, month + 1
+    
+    # Create calendar matrix
+    cal_obj = cal.Calendar(firstweekday=6)  # Sunday as first day (6=Sunday)
+    month_days = cal_obj.monthdayscalendar(year, month)
+    
+    # Convert to our format
+    weeks = []
+    today = datetime.now().date()
+    
+    for week in month_days:
+        week_data = []
+        for day in week:
+            if day == 0:  # Day from previous/next month
+                week_data.append({
+                    'day': '',
+                    'current_month': False,
+                    'is_today': False,
+                    'events': []  # Empty events for non-current month days
+                })
+            else:
+                day_date = datetime(year, month, day).date()
+                week_data.append({
+                    'day': day,
+                    'current_month': True,
+                    'is_today': (day_date == today),
+                    'events': get_events_for_date(day_date)  # Get real events from database
+                })
+        weeks.append(week_data)
+    
+    return render_template('calendar.html',
+                         calendar=weeks,
+                         month_name=datetime(year, month, 1).strftime('%B'),
+                         year=year,
+                         prev_year=prev_year,
+                         prev_month=prev_month,
+                         next_year=next_year,
+                         next_month=next_month)
+
+def get_events_for_date(date):
+    """Get tasks/events for a specific date from the database"""
+    date_str = date.strftime("%Y-%m-%d")
+    
+    with get_db_connection() as conn:
+        # Get todos for this date
+        rows = conn.execute(
+            "SELECT * FROM todos WHERE due_date = ? ORDER BY due_time",
+            (date_str,)
+        ).fetchall()
+        
+        events = []
+        for row in rows:
+            todo = Todo(**dict(row))
+            events.append({
+                'id': todo.id,
+                'title': todo.task,
+                'time': todo.due_time if todo.due_time else 'All Day',
+                'color': '#ff8c66' if not todo.is_done else '#888888'  # Orange for pending, gray for completed
+            })
+        
+        return events
+    
+@app.route('/todo_details/<int:todo_id>')
+def todo_details(todo_id):
+    todo = Todo.get_by_id(todo_id)
+    if not todo:
+        flash("Task not found", "error")
+        return redirect(url_for('calendar_view'))
+    
+    return render_template('todo_details.html', todo=todo)
+
+@app.route('/')
+def home():
+    current_date = datetime.now().strftime("%A, %B %d, %Y")
+    current_day = datetime.now().strftime("%A")
+    
+    with get_db_connection() as conn:
+        today_classes = conn.execute(
+            "SELECT * FROM classes WHERE day = ? ORDER BY start_time",
+            (current_day,)
+        ).fetchall()
+    
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    today_tasks = []
+    with get_db_connection() as conn:
+        rows = conn.execute(
+            "SELECT * FROM todos WHERE due_date = ? ORDER BY due_time",
+            (today_str,)
+        ).fetchall()
+        today_tasks = [Todo(**dict(row)) for row in rows]
+    
+    completed_tasks = sum(1 for task in today_tasks if task.is_done)
+    
+    return render_template('home.html',
+                         current_date=current_date,
+                         today_classes=today_classes,
+                         today_tasks=today_tasks,
+                         completed_tasks=completed_tasks)
+    
 # ---------------------- RUN APP ----------------------
 if __name__ == "__main__":
     app.run(debug=True, use_reloader=False)

@@ -15,9 +15,10 @@
     {% endif %}
   </form>
 
-  <!-- Action button -->
+  <!-- Action buttons -->
   <div class="actions">
     <a href="{{ url_for('add_todo') }}" class="button secondary">Add New Task</a>
+    <a href="{{ url_for('calendar_view') }}" class="button secondary">View Calendar</a>
   </div>
 
   {% if todos %}

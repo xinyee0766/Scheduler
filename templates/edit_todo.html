@@ -33,10 +33,12 @@
       <input type="time" name="due_time" value="{{ todo.due_time or '' }}">
     </label>
 
-    <label>
-      Done
-      <input type="checkbox" name="is_done" {% if todo.is_done %}checked{% endif %}>
-    </label>
+    <!-- Checkbox with better alignment -->
+    <div style="display: flex; align-items: center; gap: 10px; margin-top: 15px;">
+      <input type="checkbox" name="is_done" id="is_done" {% if todo.is_done %}checked{% endif %} 
+             style="margin: 0; width: 18px; height: 18px;">
+      <label for="is_done" style="margin: 0; font-weight: 500; cursor: pointer;">Mark as done</label>
+    </div>
 
     <div class="actions">
       <button type="submit" class="button">Save</button>

@@ -1,3 +1,34 @@
+/* Theme Variables */
+:root[data-theme="light"] {
+  --bg-color: #FFF2EB;
+  --text-color: #000;
+  --container-bg: #FFDCDC;
+  --nav-bg: linear-gradient(135deg, #ffc8c8 0%, #ffc8c8 100%);
+  --nav-link-color: white;
+  --nav-link-hover-bg: rgba(255, 255, 255, 0.15);
+  --table-bg: #fff;
+  --table-header-bg: #FFD6BA;
+  --table-row-alt: #FFF2EB;
+  --table-row-hover: #FFE0D2;
+  --accent-color: #ff8c66;
+  --accent-hover: #e67350;
+}
+
+:root[data-theme="dark"] {
+  --bg-color: #121212;
+  --text-color: #f5f5f5;
+  --container-bg: #1e1e1e;
+  --nav-bg: linear-gradient(135deg, #2c2c2c 0%, #2c2c2c 100%);
+  --nav-link-color: #f5f5f5;
+  --nav-link-hover-bg: rgba(255, 255, 255, 0.1);
+  --table-bg: #1e1e1e;
+  --table-header-bg: #333;
+  --table-row-alt: #222;
+  --table-row-hover: #2a2a2a;
+  --accent-color: #ff8c66;
+  --accent-hover: #e67350;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -360,13 +391,13 @@ td strong {
     3px 3px 6px #ffc2a1;
 }
 
-.class-event.monday    { background-color: #4CAF50; }   
-.class-event.tuesday   { background-color: #2196F3; }  
-.class-event.wednesday { background-color: #9C27B0; }  
-.class-event.thursday  { background-color: #FF9800; }  
-.class-event.friday    { background-color: #F44336; }   
-.class-event.saturday  { background-color: #795548; }  
-.class-event.sunday    { background-color: #607D8B; }  
+.class-event.monday    { background-color: #b7e9b9; }   
+.class-event.tuesday   { background-color: #b4d3ec; }  
+.class-event.wednesday { background-color: #e4adee; }  
+.class-event.thursday  { background-color: #ffe8c6; }  
+.class-event.friday    { background-color: #a9a9ff; }   
+.class-event.saturday  { background-color: #ffa5a5; }  
+.class-event.sunday    { background-color: #fffc9a; }  
 
 .styled-table {
   width: 100%;
@@ -660,4 +691,810 @@ td strong {
   width: 100%;
   height: 80vh;  /* adjust as needed */
   border: none;
+}
+
+/* Calendar Container */
+.calendar-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+/* Calendar Table Adjustments */
+.html-calendar {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    font-size: 14px;
+    table-layout: fixed;
+}
+
+.html-calendar th {
+    background: #FFD6BA;
+    color: #000;
+    padding: 12px;
+    text-align: center;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 12px;
+    border: 1px solid #FFC8A8;
+}
+
+.html-calendar td {
+    border: 1px solid #FFE0D2;
+    padding: 8px;
+    vertical-align: top;
+    height: 100px;
+    background: #fff;
+    overflow: hidden;
+}
+
+/* Day number styling */
+.day-number {
+    font-size: 1em;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #000;
+    text-align: right;
+}
+
+/* Events styling */
+.events {
+    max-height: 70px;
+    overflow-y: auto;
+}
+
+.event-item {
+    margin: 2px 0;
+    padding: 4px;
+    background: #FFF2EB;
+    border-radius: 4px;
+    font-size: 0.8em;
+    border-left: 2px solid #ff8c66;
+}
+
+.event-link {
+    color: #000;
+    text-decoration: none;
+    font-weight: 500;
+    display: block;
+}
+
+.event-link:hover {
+    color: #ff8c66;
+}
+
+.events small {
+    color: #666;
+    font-size: 0.7em;
+}
+
+/* Navigation adjustments - REMOVED justify-content: center */
+.calendar-nav {
+    display: flex;
+    justify-content: space-between; /* Changed from center */
+    align-items: center;
+    margin: 20px 0;
+    padding: 15px;
+    background: #FFD6BA;
+    border-radius: 12px;
+    gap: 1rem;
+}
+
+.nav-btn {
+    padding: 8px 16px;
+    background: #ff8c66;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: background 0.3s;
+    white-space: nowrap;
+}
+
+.nav-btn:hover {
+    background: #e67350;
+}
+
+.current-month {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #000;
+    min-width: 200px;
+    text-align: center;
+}
+
+/* Action buttons - REMOVED justify-content: center */
+.actions {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+    .html-calendar td {
+        height: 90px;
+        padding: 6px;
+    }
+    
+    .event-item {
+        font-size: 0.75em;
+        padding: 3px;
+    }
+}
+
+@media (max-width: 768px) {
+    .calendar-nav {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 10px;
+    }
+    
+    .html-calendar {
+        font-size: 12px;
+    }
+    
+    .html-calendar td {
+        height: 80px;
+        padding: 4px;
+    }
+    
+    .day-number {
+        font-size: 0.9em;
+    }
+    
+    .event-item {
+        font-size: 0.7em;
+    }
+}
+
+/* Scrollbar styling for events */
+.events::-webkit-scrollbar {
+    width: 4px;
+}
+
+.events::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.events::-webkit-scrollbar-thumb {
+    background: #ff8c66;
+    border-radius: 2px;
+}
+
+.events::-webkit-scrollbar-thumb:hover {
+    background: #e67350;
+}
+
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+/* View Task button styling */
+.view-task-btn {
+    display: inline-block;
+    padding: 2px 6px;
+    background: #ff8c66;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 0.7em;
+    font-weight: 500;
+    margin-top: 3px;
+    transition: background 0.3s;
+}
+
+.view-task-btn:hover {
+    background: #e67350;
+    color: white;
+}
+
+.event-item {
+    margin: 2px 0;
+    padding: 4px;
+    background: #FFF2EB;
+    border-radius: 4px;
+    font-size: 0.8em;
+    border-left: 2px solid #ff8c66;
+    position: relative;
+}
+
+.today-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.summary-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.summary-icon {
+  font-size: 2rem;
+}
+
+.summary-content h3 {
+  font-size: 2rem;
+  margin: 0;
+  color: #ff8c66;
+}
+
+.summary-content p {
+  margin: 0;
+  color: #666;
+  font-weight: 500;
+}
+
+.overview-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.overview-section {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.overview-section h2 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: #333;
+}
+
+/* Class List Styles */
+.class-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.class-item {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  background: #FFF2EB;
+  border-radius: 8px;
+  border-left: 4px solid #4CAF50;
+}
+
+.class-time {
+  min-width: 80px;
+}
+
+.time-range {
+  font-weight: 600;
+  color: #333;
+}
+
+.class-details h4 {
+  margin: 0 0 0.5rem 0;
+  color: #333;
+}
+
+.class-location, .class-notes {
+  margin: 0.2rem 0;
+  font-size: 0.9em;
+  color: #666;
+}
+
+/* Task List Styles */
+.task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #FFF2EB;
+  border-radius: 8px;
+  border-left: 4px solid #ff8c66;
+}
+
+.task-item.completed {
+  opacity: 0.7;
+  border-left-color: #888;
+}
+
+.task-checkbox input {
+  width: 18px;
+  height: 18px;
+}
+
+.task-details h4 {
+  margin: 0 0 0.3rem 0;
+  color: #333;
+  flex: 1;
+}
+
+.task-item.completed .task-details h4 {
+  text-decoration: line-through;
+}
+
+.task-time {
+  margin: 0;
+  font-size: 0.9em;
+  color: #666;
+}
+
+.task-actions {
+  margin-left: auto;
+}
+
+.small-btn {
+  padding: 0.3rem 0.8rem;
+  background: #ff8c66;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+  font-size: 0.8em;
+  font-weight: 500;
+}
+
+.small-btn:hover {
+  background: #e67350;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+}
+
+.empty-state p {
+  margin-bottom: 1rem;
+}
+
+.quick-actions {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* Navigation Bar Styles */
+nav {
+    background: linear-gradient(135deg, #ffc8c8 0%, #ffc8c8 100%);
+    padding: 0.8rem 2rem;
+    border-radius: 12px;
+    width: 90vw;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    margin: 1rem 0;
+}
+
+.nav-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: white;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.logo-icon {
+    font-size: 1.8rem;
+    color: white;
+}
+
+.nav-links {
+    display: flex;
+    gap: 0.5rem;
+    list-style: none;
+}
+
+.nav-links a {
+    color: white;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.1rem;
+    padding: 0.7rem 1.5rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.nav-links a:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+}
+
+.nav-links a.active {
+    background-color: rgba(255, 255, 255, 0.25);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.nav-links a.active::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 5px;
+    height: 5px;
+    background-color: white;
+    border-radius: 50%;
+}
+
+.nav-icon {
+    font-size: 1.2rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    nav {
+        padding: 0.8rem 1rem;
+    }
+    
+    .nav-container {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .nav-links {
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .nav-links a {
+        padding: 0.6rem 1rem;
+        font-size: 1rem;
+    }
+}
+
+/* === DARK MODE STYLES === */
+body[data-theme="dark"] {
+  background-color: #121212;
+  color: #eaeaea;
+}
+
+
+:root[data-theme="dark"] .navbar,
+:root[data-theme="dark"] nav {
+  background-color: #2c2c2c;
+}
+
+:root[data-theme="dark"] .container,
+:root[data-theme="dark"] .card,
+:root[data-theme="dark"] .summary-card,
+:root[data-theme="dark"] .overview-section,
+:root[data-theme="dark"] .quick-actions {
+  background-color: #1e1e1e;
+  color: #eaeaea;
+  border: 1px solid #333;
+}
+
+:root[data-theme="dark"] h1,
+:root[data-theme="dark"] h2,
+:root[data-theme="dark"] h3,
+:root[data-theme="dark"] h4,
+:root[data-theme="dark"] h5,
+:root[data-theme="dark"] h6 {
+  color: #f5f5f5;
+}
+
+:root[data-theme="dark"] a {
+  color: #ff8c66;
+}
+
+:root[data-theme="dark"] button,
+:root[data-theme="dark"] .btn,
+:root[data-theme="dark"] .nav-btn,
+:root[data-theme="dark"] .small-btn,
+:root[data-theme="dark"] .view-task-btn {
+  background-color: #ff8c66;
+  color: #fff;
+  border: none;
+}
+
+:root[data-theme="dark"] button:hover,
+:root[data-theme="dark"] .btn:hover,
+:root[data-theme="dark"] .nav-btn:hover,
+:root[data-theme="dark"] .small-btn:hover,
+:root[data-theme="dark"] .view-task-btn:hover {
+  background-color: #ff7043;
+}
+
+:root[data-theme="dark"] table,
+:root[data-theme="dark"] .styled-table {
+  background-color: #1a1a1a;
+  color: #eaeaea;
+  border: 1px solid #333;
+}
+
+:root[data-theme="dark"] th {
+  background-color: #333;
+  color: #fff;
+}
+
+:root[data-theme="dark"] td {
+  border-color: #444;
+}
+/* ============================
+   DARK MODE OVERRIDES
+   ============================ */
+:root[data-theme="dark"] body {
+  background-color: var(--bg-color);
+  background-image: none; /* remove light background images */
+  color: var(--text-color);
+}
+
+:root[data-theme="dark"] .container {
+  background: var(--container-bg);
+  color: var(--text-color);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+}
+
+:root[data-theme="dark"] h1, 
+:root[data-theme="dark"] h2,
+:root[data-theme="dark"] h3,
+:root[data-theme="dark"] h4 {
+  color: var(--text-color);
+}
+
+:root[data-theme="dark"] input,
+:root[data-theme="dark"] select,
+:root[data-theme="dark"] textarea {
+  background: #2a2a2a;
+  color: var(--text-color);
+  border: 1px solid #444;
+}
+
+:root[data-theme="dark"] input:focus,
+:root[data-theme="dark"] select:focus,
+:root[data-theme="dark"] textarea:focus {
+  border-color: var(--accent-color);
+}
+
+:root[data-theme="dark"] table,
+:root[data-theme="dark"] .styled-table,
+:root[data-theme="dark"] #preview table,
+:root[data-theme="dark"] .html-calendar {
+  background: var(--table-bg);
+  color: var(--text-color);
+  border: 1px solid #333;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+}
+
+:root[data-theme="dark"] thead,
+:root[data-theme="dark"] .styled-table th,
+:root[data-theme="dark"] #preview thead,
+:root[data-theme="dark"] .html-calendar th {
+  background: var(--table-header-bg);
+  color: var(--text-color);
+  border-bottom: 1px solid #444;
+}
+
+:root[data-theme="dark"] tbody tr:nth-child(even),
+:root[data-theme="dark"] #preview tbody tr:nth-child(even),
+:root[data-theme="dark"] .styled-table tbody tr:nth-child(even) {
+  background: var(--table-row-alt);
+}
+
+:root[data-theme="dark"] tbody tr:hover,
+:root[data-theme="dark"] #preview tbody tr:hover,
+:root[data-theme="dark"] .styled-table tbody tr:hover {
+  background: var(--table-row-hover);
+}
+
+:root[data-theme="dark"] nav,
+:root[data-theme="dark"] .navbar,
+:root[data-theme="dark"] .calendar-nav {
+  background: var(--nav-bg);
+}
+
+:root[data-theme="dark"] .navbar a,
+:root[data-theme="dark"] .nav-links a {
+  color: var(--nav-link-color);
+}
+
+:root[data-theme="dark"] .navbar a:hover,
+:root[data-theme="dark"] .nav-links a:hover {
+  background-color: var(--nav-link-hover-bg);
+}
+
+:root[data-theme="dark"] button,
+:root[data-theme="dark"] .button,
+:root[data-theme="dark"] .btn,
+:root[data-theme="dark"] .nav-btn {
+  background: var(--accent-color);
+  color: #fff;
+}
+
+:root[data-theme="dark"] button:hover,
+:root[data-theme="dark"] .button:hover,
+:root[data-theme="dark"] .btn:hover,
+:root[data-theme="dark"] .nav-btn:hover {
+  background: var(--accent-hover);
+}
+
+:root[data-theme="dark"] .flash.success {
+  background-color: #1e3d2a;
+  color: #a2a8a2;
+  border: 1px solid #7f8180;
+}
+
+:root[data-theme="dark"] .flash.error {
+  background-color: #3d1e1e;
+  color: #000000;
+  border: 1px solid #5d2e2e;
+}
+
+:root[data-theme="dark"] .empty-message {
+  color: var(--text-color);
+}
+
+:root[data-theme="dark"] .event-item {
+  background: #2a2a2a;
+  border-left: 2px solid var(--accent-color);
+}
+
+:root[data-theme="dark"] .today-summary,
+:root[data-theme="dark"] .summary-card,
+:root[data-theme="dark"] .overview-section,
+:root[data-theme="dark"] .quick-actions {
+  background: var(--container-bg);
+  color: var(--text-color);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+}
+/* === DARK MODE FIXES === */
+[data-theme="dark"] body,
+[data-theme="dark"] .container,
+[data-theme="dark"] .site-header,
+[data-theme="dark"] .navbar,
+[data-theme="dark"] .overview-section,
+[data-theme="dark"] .summary-card,
+[data-theme="dark"] .quick-actions,
+[data-theme="dark"] .card,
+[data-theme="dark"] main {
+  background-color: #121212 !important;
+  color: #eaeaea !important;
+}
+
+/* Navbar links */
+[data-theme="dark"] .navbar a {
+  color: #eaeaea !important;
+}
+
+/* Buttons */
+[data-theme="dark"] button,
+[data-theme="dark"] .btn,
+[data-theme="dark"] .nav-btn,
+[data-theme="dark"] .small-btn,
+[data-theme="dark"] .view-task-btn {
+  background-color: #444 !important;
+  color: #fff !important;
+}
+
+/* Flash messages or notifications */
+[data-theme="dark"] .flash {
+  background-color: #333 !important;
+  color: #ffcc00 !important;
+}
+/* Force full-page dark background */
+[data-theme="dark"] html,
+[data-theme="dark"] body {
+  background-color: #121212 !important;
+  color: #eaeaea !important;
+  min-height: 100%;
+}
+
+/* Ensure main content areas also match */
+[data-theme="dark"] main,
+[data-theme="dark"] .container {
+  background-color: #121212 !important;
+  color: #eaeaea !important;
+}
+/* === Dark Mode Fixes === */
+html, body {
+  min-height: 100vh;       /* ensure full viewport height */
+  margin: 0;               /* remove default margins */
+}
+
+body[data-theme="dark"] {
+  background-color: #121212 !important;
+  background-image: none !important; /* remove pink/light image */
+  color: #f5f5f5 !important;
+}
+/* Only fix the page background in dark mode */
+[data-theme="dark"] html,
+[data-theme="dark"] body {
+  background-color: #121212 !important;
+  min-height: 100vh;
+  margin: 0;
+}
+/* Force full-page dark background in dark mode */
+[data-theme="dark"] html,
+[data-theme="dark"] body {
+  background-color: #121212 !important;
+  background-image: none !important;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+}
+[data-theme="dark"] * {
+  background-image: none !important;
+}
+/* Force dark mode background to fill full viewport */
+[data-theme="dark"] html,
+[data-theme="dark"] body {
+  background-color: #121212 !important;
+  background-image: none !important;
+  min-height: 100vh;   /* Always at least viewport height */
+  height: auto;
+  margin: 0;
+  padding: 0;
+}
+/* Fix timetable tab background in dark mode */
+[data-theme="dark"] .timetable,
+[data-theme="dark"] .timetable-container,
+[data-theme="dark"] #timetable {
+  background-color: #121212 !important;
+  color: #eaeaea !important;
+}
+/* Ensure full dark background on timetable */
+[data-theme="dark"] body,
+[data-theme="dark"] html {
+  background-color: #121212 !important;
+  color: #eaeaea !important;
+  min-height: 100vh;
+}
+
+/* Make timetable stretch to fill the screen */
+[data-theme="dark"] .timetable,
+[data-theme="dark"] .timetable-container,
+[data-theme="dark"] #timetable,
+[data-theme="dark"] main.container {
+  background-color: #121212 !important;
+  color: #eaeaea !important;
+  min-height: 100vh;
+}
+
+/* Force dark mode background to hide peach wallpaper */
+[data-theme="dark"] body {
+  background-image: none !important;
+  background-color: #121212 !important;
 }

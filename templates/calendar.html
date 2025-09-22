@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Calendar View{% endblock %}
+
+{% block content %}
+<main class="container calendar-container">
+  <h1 style="text-align: center;">Calendar View - {{ month_name }} {{ year }}</h1>
+  
+  <!-- Action buttons -->
+  <div class="actions">
+    <a href="{{ url_for('todos') }}" class="button secondary">View as List</a>
+    <a href="{{ url_for('add_todo') }}" class="button secondary">Add New Task</a>
+  </div>
+
+  <!-- Month Navigation -->
+  <div class="calendar-nav">
+    <a href="/calendar?year={{ prev_year }}&month={{ prev_month }}" class="nav-btn">&larr; Previous Month</a>
+    <span class="current-month">{{ month_name }} {{ year }}</span>
+    <a href="/calendar?year={{ next_year }}&month={{ next_month }}" class="nav-btn">Next Month &rarr;</a>
+  </div>
+
+  <!-- Calendar Table -->
+  <table class="html-calendar">
+    <thead>
+      <tr>
+        <th>Sun</th>
+        <th>Mon</th>
+        <th>Tue</th>
+        <th>Wed</th>
+        <th>Thu</th>
+        <th>Fri</th>
+        <th>Sat</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for week in calendar %}
+      <tr>
+        {% for day in week %}
+        <td class="{% if not day.current_month %}other-month{% endif %} {% if day.is_today %}today{% endif %}">
+          <div class="day-number">{{ day.day }}</div>
+          <div class="events">
+            {% for event in day.events %}
+            <div class="event-item">
+              <div class="event-content">
+                {{ event.title }}
+                {% if event.time and event.time != 'All Day' %}
+                <small>({{ event.time }})</small>
+                {% endif %}
+              </div>
+              <a href="{{ url_for('todo_details', todo_id=event.id) }}" class="view-task-btn">
+                View Task
+              </a>
+            </div>
+            {% endfor %}
+          </div>
+        </td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</main>
+{% endblock %}
