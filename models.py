@@ -144,3 +144,30 @@ class Todo:
                 })
         
             return events
+        
+class UploadedFile:
+    def __init__(self, id=None, filename=None, path=None):
+        self.id = id
+        self.filename = filename
+        self.path = path
+
+    def save(self):
+        with get_db_connection() as conn:
+            if self.id:
+                conn.execute(
+                    "UPDATE uploaded_files SET filename=?, path=? WHERE id=?",
+                    (self.filename, self.path, self.id)
+                )
+            else:
+                cur = conn.execute(
+                    "INSERT OR IGNORE INTO uploaded_files (filename, path) VALUES (?, ?)",
+                    (self.filename, self.path)
+                )
+                self.id = cur.lastrowid
+            conn.commit()
+
+    @classmethod
+    def all(cls):
+        with get_db_connection() as conn:
+            rows = conn.execute("SELECT * FROM uploaded_files").fetchall()
+            return [cls(**dict(r)) for r in rows]

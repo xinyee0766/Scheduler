@@ -6,6 +6,7 @@
 <div class="dashboard-container" style="padding:20px; max-width:1200px; margin:0 auto;">
   <h2>Note</h2>
 
+  <!-- Drop Area -->
   <div id="drop-area" style="border:2px dashed #f7c6c7; border-radius:10px; background:#ffdede; padding:40px; text-align:center; margin-bottom:30px;">
     <div style="margin-bottom:10px;">
       <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="#f7c6c7">
@@ -24,18 +25,18 @@
     <input type="file" id="fileElem" multiple style="display:none;">
   </div>
 
-  <!-- Global Edit Button -->
+  <!-- Edit Mode Button -->
   <div style="text-align:center; margin-bottom:15px;">
     <button id="edit-mode" style="background:#f7c6c7; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:13px;">Edit</button>
   </div>
 
-  <!-- Action Buttons (only show in edit mode) -->
+  <!-- Action Buttons -->
   <div id="action-buttons" style="margin-bottom:15px; display:none; text-align:center;">
     <button id="delete-selected" style="background:#d9534f; color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; margin-right:10px;">Delete Selected</button>
     <button id="delete-all" style="background:#6c757d; color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;">Delete All</button>
   </div>
 
-  <!-- Uploaded Files List -->
+  <!-- File List -->
   <div id="file-list" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap:15px;"></div>
 </div>
 
@@ -50,24 +51,8 @@ const deleteAllBtn = document.getElementById("delete-all");
 
 let editMode = false;
 
-// Prevent default drag behaviors
-['dragenter','dragover','dragleave','drop'].forEach(eventName => {
-  dropArea.addEventListener(eventName, e => e.preventDefault());
-  document.body.addEventListener(eventName, e => e.preventDefault());
-});
-
-// Handle files
-dropArea.addEventListener("drop", handleFiles);
-fileElem.addEventListener("change", () => handleFiles({ dataTransfer: { files: fileElem.files } }));
-
-function handleFiles(e) {
-  const files = e.dataTransfer.files;
-  for (let i = 0; i < files.length; i++) {
-    previewAndUpload(files[i]);
-  }
-}
-
-function previewAndUpload(file) {
+// ------------------ UTILITY ------------------
+function createFileItem(file) {
   const container = document.createElement("div");
   container.style.position = "relative";
   container.style.textAlign = "center";
@@ -75,79 +60,84 @@ function previewAndUpload(file) {
   container.classList.add("file-item");
 
   let previewElement;
-  if (file.type.startsWith("image/")) {
+  if (file.filename?.match(/\.(jpg|jpeg|png|gif)$/i) || file.type?.startsWith("image/")) {
     previewElement = document.createElement("img");
-    previewElement.src = URL.createObjectURL(file);
-    previewElement.style.maxWidth = "100%";
-    previewElement.style.height = "120px";
-    previewElement.style.objectFit = "cover";
-    previewElement.style.border = "1px solid #ddd";
-    previewElement.style.borderRadius = "6px";
-    previewElement.style.marginBottom = "5px";
-  } else if (file.type === "application/pdf") {
+    previewElement.src = file.path || URL.createObjectURL(file);
+  } else if (file.filename?.endsWith(".pdf") || file.type === "application/pdf") {
     previewElement = document.createElement("iframe");
-    previewElement.src = URL.createObjectURL(file);
-    previewElement.style.width = "100%";
-    previewElement.style.height = "120px";
-    previewElement.style.border = "1px solid #ddd";
-    previewElement.style.borderRadius = "6px";
-    previewElement.style.marginBottom = "5px";
+    previewElement.src = file.path || URL.createObjectURL(file);
   } else {
     previewElement = document.createElement("div");
     previewElement.textContent = "File uploaded";
-    previewElement.style.color = "#555";
-    previewElement.style.border = "1px solid #ddd";
-    previewElement.style.borderRadius = "6px";
-    previewElement.style.height = "120px";
     previewElement.style.display = "flex";
     previewElement.style.alignItems = "center";
     previewElement.style.justifyContent = "center";
-    previewElement.style.marginBottom = "5px";
+    previewElement.style.height = "120px";
   }
 
-  // Filename link (downloadable)
+  previewElement.style.width = "100%";
+  previewElement.style.height = "120px";
+  previewElement.style.objectFit = "cover";
+  previewElement.style.border = "1px solid #ddd";
+  previewElement.style.borderRadius = "6px";
+  previewElement.style.marginBottom = "5px";
+
   const filenameLink = document.createElement("a");
-  filenameLink.textContent = file.name;
-  filenameLink.href = URL.createObjectURL(file);
-  filenameLink.download = file.name;
+  filenameLink.textContent = file.filename || file.name;
+  filenameLink.href = file.path || URL.createObjectURL(file);
+  filenameLink.download = file.filename || file.name;
   filenameLink.style.display = "block";
   filenameLink.style.color = "#007bff";
   filenameLink.style.textDecoration = "none";
   filenameLink.style.wordBreak = "break-word";
 
-  // Checkbox (hidden initially)
   const checkbox = document.createElement("input");
   checkbox.type = "checkbox";
   checkbox.style.position = "absolute";
   checkbox.style.top = "5px";
   checkbox.style.left = "5px";
-  checkbox.style.display = "none";
+  checkbox.style.display = editMode ? "block" : "none";
 
   container.appendChild(previewElement);
   container.appendChild(filenameLink);
   container.appendChild(checkbox);
   fileList.appendChild(container);
 
-  // Upload file
-  const formData = new FormData();
-  formData.append("files[]", file);
-
-  fetch("/dashboard/upload", { method: "POST", body: formData })
-    .then(response => response.json())
-    .then(data => {
-      if (data.uploaded && data.uploaded.length > 0) {
-        const uploadedPath = "/uploads/" + encodeURIComponent(data.uploaded[0]);
-        filenameLink.href = uploadedPath;
-        filenameLink.setAttribute("download", data.uploaded[0]);
-        if (file.type.startsWith("image/") || file.type === "application/pdf") {
-          previewElement.src = uploadedPath;
-        }
-      }
-    })
-    .catch(err => console.error("Upload failed:", err));
+  return container;
 }
 
-// Toggle edit mode
+// ------------------ FILE UPLOAD ------------------
+['dragenter','dragover','dragleave','drop'].forEach(eventName => {
+  dropArea.addEventListener(eventName, e => e.preventDefault());
+  document.body.addEventListener(eventName, e => e.preventDefault());
+});
+
+dropArea.addEventListener("drop", handleFiles);
+fileElem.addEventListener("change", () => handleFiles({ dataTransfer: { files: fileElem.files } }));
+
+function handleFiles(e) {
+  const files = e.dataTransfer.files;
+  for (let i = 0; i < files.length; i++) {
+    const container = createFileItem(files[i]);
+
+    const formData = new FormData();
+    formData.append("files[]", files[i]);
+
+    fetch("/dashboard/upload", { method: "POST", body: formData })
+      .then(res => res.json())
+      .then(data => {
+        if (data.uploaded && data.uploaded.length > 0) {
+          const uploadedPath = "/uploads/" + encodeURIComponent(data.uploaded[0]);
+          container.querySelector("a").href = uploadedPath;
+          if (files[i].type.startsWith("image/") || files[i].type === "application/pdf") {
+            container.querySelector("img,iframe")?.setAttribute("src", uploadedPath);
+          }
+        }
+      });
+  }
+}
+
+// ------------------ EDIT MODE ------------------
 editBtn.addEventListener("click", () => {
   editMode = !editMode;
   document.querySelectorAll("#file-list input[type='checkbox']").forEach(cb => {
@@ -158,16 +148,38 @@ editBtn.addEventListener("click", () => {
   editBtn.textContent = editMode ? "Cancel" : "Edit";
 });
 
-// Delete selected files
+// ------------------ DELETE FILES ------------------
 deleteSelectedBtn.addEventListener("click", () => {
   document.querySelectorAll("#file-list input[type='checkbox']:checked").forEach(cb => {
-    cb.parentElement.remove();
+    const filename = cb.parentElement.querySelector("a").textContent;
+    fetch("/dashboard/delete_file", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({filename})
+    }).then(res => res.json()).then(data => {
+      if (data.success) cb.parentElement.remove();
+    });
   });
 });
 
-// Delete all files
 deleteAllBtn.addEventListener("click", () => {
-  fileList.innerHTML = "";
+  fetch("/dashboard/delete_all_files", {method: "POST"})
+    .then(res => res.json()).then(data => {
+      if (data.success) fileList.innerHTML = "";
+    });
 });
+
+// ------------------ LOAD EXISTING FILES ------------------
+function loadUploadedFiles() {
+  fetch("/dashboard/files")
+    .then(res => res.json())
+    .then(files => {
+      fileList.innerHTML = ""; // clear existing
+      files.forEach(file => createFileItem(file));
+    })
+    .catch(err => console.error("Failed to load files:", err));
+}
+
+window.addEventListener("DOMContentLoaded", loadUploadedFiles);
 </script>
 {% endblock %}
