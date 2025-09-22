@@ -12,12 +12,14 @@ colorama==0.4.6
 cryptography==45.0.7
 Flask==2.3.3
 frozenlist==1.7.0
+gunicorn==23.0.0
 http_ece==1.2.1
 idna==3.10
 itsdangerous==2.2.0
 Jinja2==3.1.6
 MarkupSafe==3.0.2
 multidict==6.6.4
+packaging==25.0
 propcache==0.3.2
 py-vapid==1.9.2
 pycparser==2.23
