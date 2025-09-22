@@ -12,7 +12,7 @@
       margin: 20px 0;
       font-size: 18px;
       font-weight: bold;
-      color: #ffd700; /* optional golden color */
+      color: #ffd700;
     }
     /* Confetti canvas full-screen */
     #confetti-canvas {
@@ -37,7 +37,6 @@
       <a href="{{ url_for('timetable') }}">Timetable</a>
       <a href="{{ url_for('todos') }}">To-Do List</a>
       <a href="{{ url_for('calendar_view') }}">Calendar</a>
-
       <button id="themeToggle">🌙 Dark Mode</button>
     </nav>
   </header>
@@ -56,7 +55,6 @@
         </div>
       {% endif %}
     {% endwith %}
-
     {% block content %}{% endblock %}
   </main>
 
@@ -65,12 +63,8 @@
 
   <!-- Notification Permission -->
   <script>
-    if ("Notification" in window) {
-      if (Notification.permission !== "granted" && Notification.permission !== "denied") {
-        Notification.requestPermission().then(permission => {
-          console.log("Notification permission:", permission);
-        });
-      }
+    if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
+      Notification.requestPermission().then(permission => console.log("Notification permission:", permission));
     }
   </script>
 
@@ -94,7 +88,7 @@
 
         data.tasks.forEach(task => {
           if (!notifiedTasks.includes(task)) {
-            if ("Notification" in window && Notification.permission === "granted") {
+            if (Notification.permission === "granted") {
               new Notification("Task Due Today!", {
                 body: task,
                 icon: "{{ url_for('static', filename='icon.png') }}",
@@ -111,8 +105,8 @@
       }
     }
 
-    setInterval(checkDueTasks, 60000); // every 1 min
-    checkDueTasks(); // immediate check
+    setInterval(checkDueTasks, 60000);
+    checkDueTasks();
   </script>
 
   <!-- Push subscription -->
@@ -163,71 +157,68 @@
         "You got this, one task at a time.",
         "Take breaks, then crush your goals!"
       ];
-      const quoteContainer = document.getElementById("quote-container");
-      const randomIndex = Math.floor(Math.random() * quotes.length);
-      quoteContainer.textContent = quotes[randomIndex];
+      document.getElementById("quote-container").textContent =
+        quotes[Math.floor(Math.random() * quotes.length)];
 
       // --- Confetti Animation ---
-      function launchConfetti() {
-        const canvas = document.getElementById("confetti-canvas");
-        const ctx = canvas.getContext("2d");
+      const canvas = document.getElementById("confetti-canvas");
+      const ctx = canvas.getContext("2d");
+      let confettis = [];
+
+      function resizeCanvas() {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
+      }
+      window.addEventListener("resize", resizeCanvas);
+      resizeCanvas();
 
+      function launchConfetti() {
         const confettiCount = 150;
-        const confettis = [];
-
-        for(let i=0; i<confettiCount; i++){
+        confettis = [];
+        for (let i = 0; i < confettiCount; i++) {
           confettis.push({
             x: Math.random() * canvas.width,
             y: Math.random() * canvas.height - canvas.height,
             r: Math.random() * 6 + 4,
             d: Math.random() * confettiCount,
-            color: `hsl(${Math.random()*360}, 100%, 50%)`,
+            color: `hsl(${Math.random() * 360}, 100%, 50%)`,
             tilt: Math.random() * 10 - 10,
+            tiltAngle: 0,
             tiltAngleIncrement: Math.random() * 0.07 + 0.05
           });
         }
-
-        function draw() {
-          ctx.clearRect(0,0,canvas.width,canvas.height);
-          confettis.forEach((c, i) => {
-            ctx.beginPath();
-            ctx.lineWidth = c.r / 2;
-            ctx.strokeStyle = c.color;
-            ctx.moveTo(c.x + c.tilt + c.r/4, c.y);
-            ctx.lineTo(c.x + c.tilt, c.y + c.tilt + c.r/4);
-            ctx.stroke();
-          });
-          update();
-        }
-
-        function update() {
-          confettis.forEach((c, i) => {
-            c.tiltAngle += c.tiltAngleIncrement;
-            c.y += (Math.cos(c.d) + 3 + c.r/2)/2;
-            c.tilt = Math.sin(c.tiltAngle) * 15;
-
-            if(c.y > canvas.height){
-              confettis[i] = { ...c, y: -10, x: Math.random()*canvas.width };
-            }
-          });
-        }
-
-        function animate() {
-          draw();
-          requestAnimationFrame(animate);
-        }
-        animate();
       }
 
-      // Trigger confetti when a task is marked complete
-      const tasks = document.querySelectorAll(".task-checkbox"); // replace with your actual checkbox class
+      function drawConfetti() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        confettis.forEach((c, i) => {
+          ctx.beginPath();
+          ctx.lineWidth = c.r / 2;
+          ctx.strokeStyle = c.color;
+          ctx.moveTo(c.x + c.tilt + c.r / 4, c.y);
+          ctx.lineTo(c.x + c.tilt, c.y + c.tilt + c.r / 4);
+          ctx.stroke();
+
+          c.tiltAngle += c.tiltAngleIncrement;
+          c.y += (Math.cos(c.d) + 3 + c.r / 2) / 2;
+          c.tilt = Math.sin(c.tiltAngle) * 15;
+          if (c.y > canvas.height) c.y = -10;
+        });
+        requestAnimationFrame(drawConfetti);
+      }
+      drawConfetti();
+
+      // --- Trigger Confetti ---
+      function triggerConfetti() {
+        launchConfetti();
+      }
+
+      // Check all checkboxes on page and trigger confetti if checked initially
+      const tasks = document.querySelectorAll(".task-checkbox");
       tasks.forEach(task => {
-        task.addEventListener("change", (e) => {
-          if(e.target.checked){
-            launchConfetti();
-          }
+        if (task.checked) triggerConfetti();
+        task.addEventListener("change", e => {
+          if (e.target.checked) triggerConfetti();
         });
       });
     });
