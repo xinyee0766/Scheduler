@@ -1,0 +1,2 @@
+# fcm_config.py
+FCM_API_KEY = "YOUR_FIREBASE_SERVER_KEY_HERE"

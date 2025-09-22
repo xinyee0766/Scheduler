@@ -9,6 +9,10 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import json
 from werkzeug.utils import secure_filename
 import calendar as cal
+from pyfcm import FCMNotification
+from fcm_config import FCM_API_KEY
+
+push_service = FCMNotification(FCM_API_KEY)
 
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), "uploads")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # create folder if it doesn't exist
@@ -257,17 +261,19 @@ def check_due_tasks():
             continue
         due_date = datetime.strptime(str(t.due_date), "%Y-%m-%d").date()
         due_time = datetime.strptime(t.due_time, "%H:%M").time() if t.due_time else None
+        due_dt = datetime.combine(due_date, due_time) if due_time else datetime.combine(due_date, datetime.min.time())
 
-        if due_date == now.date():
-            if not due_time or now < datetime.combine(due_date, due_time):
-                tasks.append(f"{t.task} (due today)")
+        # Due today (all tasks with this due_date)
+        if due_date == now.date() and (not due_time or now < due_dt):
+            tasks.append(f"{t.task} (due today)")
 
-        if due_time:
-            due_dt = datetime.combine(due_date, due_time)
-            if abs((now - due_dt).total_seconds()) < 120:
-                tasks.append(f"{t.task} (due now)")
-            if abs((now - (due_dt + timedelta(minutes=10))).total_seconds()) < 120:
-                tasks.append(f"{t.task} (overdue 10 min)")
+        # Due now (within 2 minutes after due_time)
+        if due_time and 0 <= (now - due_dt).total_seconds() < 120:
+            tasks.append(f"{t.task} (due now)")
+
+        # Overdue ≥10 min
+        if due_time and (now - due_dt).total_seconds() >= 600:
+            tasks.append(f"{t.task} (overdue 10 min)")
 
     return jsonify({"tasks": tasks})
 
@@ -328,19 +334,18 @@ def check_and_notify():
     tasks = []
 
     for t in all_todos:
-        if not t.due_date:
+        if not t.due_date or t.is_done:
             continue
         due_date = datetime.strptime(str(t.due_date), "%Y-%m-%d").date()
         due_time = datetime.strptime(t.due_time, "%H:%M").time() if t.due_time else None
+        due_dt = datetime.combine(due_date, due_time) if due_time else datetime.combine(due_date, datetime.min.time())
 
-        if due_time:
-            due_dt = datetime.combine(due_date, due_time)
-            diff = (now - due_dt).total_seconds()
-
-            if 0 <= diff < 120:   # due now
-                tasks.append(f"{t.task} (due now)")
-            elif 600 <= diff < 720:  # 10 min overdue
-                tasks.append(f"{t.task} (overdue 10 min)")
+        # Due now (±1 min)
+        if due_time and 0 <= (now - due_dt).total_seconds() < 60:
+            tasks.append(f"{t.task} (due now)")
+        # Overdue ≥10 min
+        elif due_time and (now - due_dt).total_seconds() >= 600:
+            tasks.append(f"{t.task} (overdue 10 min)")
 
     if tasks:
         with get_db_connection() as conn:

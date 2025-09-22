@@ -35,15 +35,35 @@
 
     <!-- Checkbox with better alignment -->
     <div style="display: flex; align-items: center; gap: 10px; margin-top: 15px;">
-      <input type="checkbox" name="is_done" id="is_done" {% if todo.is_done %}checked{% endif %} 
+      <input type="checkbox" name="is_done" id="is_done" class="task-checkbox"
+             {% if todo.is_done %}checked{% endif %} 
              style="margin: 0; width: 18px; height: 18px;">
       <label for="is_done" style="margin: 0; font-weight: 500; cursor: pointer;">Mark as done</label>
     </div>
 
-    <div class="actions">
+    <div class="actions" style="margin-top: 15px;">
       <button type="submit" class="button">Save</button>
       <a href="{{ url_for('todos') }}" class="button secondary">Cancel</a>
     </div>
   </form>
 </main>
+
+<!-- Confetti trigger for checkbox -->
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const taskCheckbox = document.querySelector(".task-checkbox");
+
+    // Launch confetti if already checked
+    if (taskCheckbox.checked && typeof launchConfetti === "function") {
+      launchConfetti();
+    }
+
+    // Launch confetti on change
+    taskCheckbox.addEventListener("change", (e) => {
+      if (e.target.checked && typeof launchConfetti === "function") {
+        launchConfetti();
+      }
+    });
+  });
+</script>
 {% endblock %}
