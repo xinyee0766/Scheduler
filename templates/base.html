@@ -14,6 +14,7 @@
       font-weight: bold;
       color: #ffd700;
     }
+
     /* Confetti canvas full-screen */
     #confetti-canvas {
       position: fixed;
@@ -23,6 +24,17 @@
       height: 100%;
       pointer-events: none;
       z-index: 9999;
+    }
+
+    /* Pomodoro Timer styling */
+    #pomodoro-container {
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    #pomodoro-timer {
+      font-size: 2rem;
+      margin: 10px 0;
     }
   </style>
 </head>
@@ -55,6 +67,15 @@
         </div>
       {% endif %}
     {% endwith %}
+
+    <!-- Pomodoro Timer -->
+    <div id="pomodoro-container">
+      <h3>Pomodoro Timer</h3>
+      <div id="pomodoro-timer">25:00</div>
+      <button id="start-pomo" class="button">Start</button>
+      <button id="reset-pomo" class="button secondary">Reset</button>
+    </div>
+
     {% block content %}{% endblock %}
   </main>
 
@@ -64,7 +85,7 @@
   <!-- Notification Permission -->
   <script>
     if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
-      Notification.requestPermission().then(permission => console.log("Notification permission:", permission));
+      Notification.requestPermission();
     }
   </script>
 
@@ -146,7 +167,7 @@
   <!-- Dark mode toggle -->
   <script src="{{ url_for('static', filename='darkModeToggle.js') }}" defer></script>
 
-  <!-- Motivational Quote & Confetti Script -->
+  <!-- Motivational Quote, Confetti & Pomodoro -->
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       // --- Motivational Quote ---
@@ -160,7 +181,7 @@
       document.getElementById("quote-container").textContent =
         quotes[Math.floor(Math.random() * quotes.length)];
 
-      // --- Confetti Animation ---
+      // --- Confetti ---
       const canvas = document.getElementById("confetti-canvas");
       const ctx = canvas.getContext("2d");
       let confettis = [];
@@ -191,37 +212,78 @@
 
       function drawConfetti() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        confettis.forEach((c, i) => {
+        confettis.forEach(c => {
           ctx.beginPath();
           ctx.lineWidth = c.r / 2;
           ctx.strokeStyle = c.color;
-          ctx.moveTo(c.x + c.tilt + c.r / 4, c.y);
-          ctx.lineTo(c.x + c.tilt, c.y + c.tilt + c.r / 4);
+          ctx.moveTo(c.x + c.tilt + c.r/4, c.y);
+          ctx.lineTo(c.x + c.tilt, c.y + c.tilt + c.r/4);
           ctx.stroke();
-
           c.tiltAngle += c.tiltAngleIncrement;
-          c.y += (Math.cos(c.d) + 3 + c.r / 2) / 2;
+          c.y += (Math.cos(c.d) + 3 + c.r/2)/2;
           c.tilt = Math.sin(c.tiltAngle) * 15;
-          if (c.y > canvas.height) c.y = -10;
+          if(c.y > canvas.height) c.y = -10;
         });
         requestAnimationFrame(drawConfetti);
       }
       drawConfetti();
 
-      // --- Trigger Confetti ---
-      function triggerConfetti() {
-        launchConfetti();
-      }
-
-      // Check all checkboxes on page and trigger confetti if checked initially
       const tasks = document.querySelectorAll(".task-checkbox");
       tasks.forEach(task => {
-        if (task.checked) triggerConfetti();
+        if (task.checked) launchConfetti();
         task.addEventListener("change", e => {
-          if (e.target.checked) triggerConfetti();
+          if (e.target.checked) launchConfetti();
         });
       });
-    });
+
+    
+    // --- Pomodoro Timer  ---
+let pomoTime = parseInt(localStorage.getItem("pomoTime")) || 25 * 60;
+let interval = null;
+const timerEl = document.getElementById("pomodoro-timer");
+const startBtn = document.getElementById("start-pomo");
+const resetBtn = document.getElementById("reset-pomo");
+
+function updateTimer() {
+  const minutes = Math.floor(pomoTime / 60).toString().padStart(2, "0");
+  const seconds = (pomoTime % 60).toString().padStart(2, "0");
+  timerEl.textContent = `${minutes}:${seconds}`;
+  localStorage.setItem("pomoTime", pomoTime);
+}
+
+// Start button
+startBtn.addEventListener("click", () => {
+  if (!interval) {
+    interval = setInterval(() => {
+      pomoTime--;
+      updateTimer();
+      if (pomoTime <= 0) {
+        clearInterval(interval);
+        interval = null;
+        if (Notification.permission === "granted") {
+  new Notification("Pomodoro Complete!", { body: "Take a break!" });
+} else {
+  alert("Pomodoro Complete! Take a break!");
+}
+
+        localStorage.removeItem("pomoTime");
+      }
+    }, 1000);
+  }
+});
+
+// Reset button
+resetBtn.addEventListener("click", () => {
+  clearInterval(interval);
+  interval = null;
+  pomoTime = 25 * 60;
+  updateTimer();
+});
+
+// Initial display
+updateTimer();
+});
+
   </script>
 </body>
 </html>
