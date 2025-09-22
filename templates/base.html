@@ -5,6 +5,26 @@
   <title>{% block title %}ByeByeLastMinute{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    /* Quote styling */
+    #quote-container {
+      text-align: center;
+      margin: 20px 0;
+      font-size: 18px;
+      font-weight: bold;
+      color: #ffd700; /* optional golden color */
+    }
+    /* Confetti canvas full-screen */
+    #confetti-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 9999;
+    }
+  </style>
 </head>
 <body>
   <!-- Header and Navbar -->
@@ -17,13 +37,13 @@
       <a href="{{ url_for('timetable') }}">Timetable</a>
       <a href="{{ url_for('todos') }}">To-Do List</a>
       <a href="{{ url_for('calendar_view') }}">Calendar</a>
-<<<<<<< HEAD
-      <button id="themeToggle">🌙 Dark Mode</button>
 
-=======
->>>>>>> 93cf6cbee40ff98d0ff214fde02585c65b6a36b3
+      <button id="themeToggle">🌙 Dark Mode</button>
     </nav>
   </header>
+
+  <!-- Motivational Quote -->
+  <div id="quote-container"></div>
 
   <!-- Main Content -->
   <main class="container">
@@ -39,6 +59,9 @@
 
     {% block content %}{% endblock %}
   </main>
+
+  <!-- Confetti Canvas -->
+  <canvas id="confetti-canvas"></canvas>
 
   <!-- Notification Permission -->
   <script>
@@ -125,8 +148,89 @@
 
     subscribeUser();
   </script>
- <!-- Dark mode toggle -->
- <script src="{{ url_for('static', filename='darkModeToggle.js') }}" defer></script>
 
+  <!-- Dark mode toggle -->
+  <script src="{{ url_for('static', filename='darkModeToggle.js') }}" defer></script>
+
+  <!-- Motivational Quote & Confetti Script -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // --- Motivational Quote ---
+      const quotes = [
+        "Keep going, your assignment won’t do itself!",
+        "Small steps every day lead to big results.",
+        "Stay focused, stay productive!",
+        "You got this, one task at a time.",
+        "Take breaks, then crush your goals!"
+      ];
+      const quoteContainer = document.getElementById("quote-container");
+      const randomIndex = Math.floor(Math.random() * quotes.length);
+      quoteContainer.textContent = quotes[randomIndex];
+
+      // --- Confetti Animation ---
+      function launchConfetti() {
+        const canvas = document.getElementById("confetti-canvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const confettiCount = 150;
+        const confettis = [];
+
+        for(let i=0; i<confettiCount; i++){
+          confettis.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height - canvas.height,
+            r: Math.random() * 6 + 4,
+            d: Math.random() * confettiCount,
+            color: `hsl(${Math.random()*360}, 100%, 50%)`,
+            tilt: Math.random() * 10 - 10,
+            tiltAngleIncrement: Math.random() * 0.07 + 0.05
+          });
+        }
+
+        function draw() {
+          ctx.clearRect(0,0,canvas.width,canvas.height);
+          confettis.forEach((c, i) => {
+            ctx.beginPath();
+            ctx.lineWidth = c.r / 2;
+            ctx.strokeStyle = c.color;
+            ctx.moveTo(c.x + c.tilt + c.r/4, c.y);
+            ctx.lineTo(c.x + c.tilt, c.y + c.tilt + c.r/4);
+            ctx.stroke();
+          });
+          update();
+        }
+
+        function update() {
+          confettis.forEach((c, i) => {
+            c.tiltAngle += c.tiltAngleIncrement;
+            c.y += (Math.cos(c.d) + 3 + c.r/2)/2;
+            c.tilt = Math.sin(c.tiltAngle) * 15;
+
+            if(c.y > canvas.height){
+              confettis[i] = { ...c, y: -10, x: Math.random()*canvas.width };
+            }
+          });
+        }
+
+        function animate() {
+          draw();
+          requestAnimationFrame(animate);
+        }
+        animate();
+      }
+
+      // Trigger confetti when a task is marked complete
+      const tasks = document.querySelectorAll(".task-checkbox"); // replace with your actual checkbox class
+      tasks.forEach(task => {
+        task.addEventListener("change", (e) => {
+          if(e.target.checked){
+            launchConfetti();
+          }
+        });
+      });
+    });
+  </script>
 </body>
 </html>
