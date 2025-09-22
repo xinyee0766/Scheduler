@@ -1185,6 +1185,7 @@ nav {
     }
 }
 
+<<<<<<< HEAD
 /* === DARK MODE STYLES === */
 body[data-theme="dark"] {
   background-color: #121212;
@@ -1498,3 +1499,11 @@ body[data-theme="dark"] {
   background-image: none !important;
   background-color: #121212 !important;
 }
+=======
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    nav {
+        background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+    }
+}
+>>>>>>> 93cf6cbee40ff98d0ff214fde02585c65b6a36b3
