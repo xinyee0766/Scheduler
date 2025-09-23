@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, jso
 import sqlite3
 import os
 from datetime import datetime, timedelta
-from models import Todo, Class, init_db, UploadedFile
+from models import Todo, Class, init_db
 from config import VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY
 from pywebpush import webpush, WebPushException
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -252,6 +252,47 @@ def delete_todo(todo_id):
     todo.delete()
     flash("Task deleted successfully!", "success")
     return redirect(url_for("todos"))
+
+
+# ---------------------- JOURNAL ROUTES ----------------------
+with get_db_connection() as conn:
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS journal (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            entry_date TEXT NOT NULL,
+            mood INTEGER NOT NULL,
+            energy INTEGER NOT NULL,
+            notes TEXT
+        )
+    """)
+    conn.commit()
+
+@app.route("/journal", methods=["GET", "POST"])
+def journal():
+    with get_db_connection() as conn:
+        if request.method == "POST":
+            entry_date = request.form["entry_date"]
+            mood = request.form["mood"]
+            energy = request.form["energy"]
+            notes = request.form.get("notes", "")
+
+            conn.execute(
+                "INSERT INTO journal (entry_date, mood, energy, notes) VALUES (?, ?, ?, ?)",
+                (entry_date, mood, energy, notes),
+            )
+            conn.commit()
+            flash("Journal entry saved!")
+            return redirect(url_for("journal"))
+
+        entries = conn.execute(
+            "SELECT entry_date, mood, energy, notes FROM journal ORDER BY entry_date DESC"
+        ).fetchall()
+
+    return render_template(
+        "mood_journal.html",
+        entries=entries,
+        today=date.today().strftime("%Y-%m-%d"),
+    )
 
 # ---------------------- NOTIFICATION CHECK ----------------------
 @app.route("/todos/check")
@@ -519,4 +560,4 @@ def home():
                            total_tasks=total_tasks)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, use_reloader=False)
