@@ -1505,3 +1505,139 @@ body[data-theme="dark"] {
         background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
     }
 }
+/* ---------------- JOURNAL TAB ---------------- */
+.journal-container {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 2rem;
+  border-radius: 1.25rem;
+  background: var(--container-bg);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  transition: background 0.3s ease;
+}
+
+[data-theme="dark"] .journal-container {
+  background: #2a2a2a;
+  color: #f5f5f5; /* force clear text in dark mode */
+}
+
+/* Headings */
+.journal-container h2 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  color: var(--text-color);
+}
+
+/* Labels */
+.journal-container label {
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+  display: block;
+  color: var(--text-color);
+}
+
+/* Inputs & textarea */
+.journal-container input,
+.journal-container textarea {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid #ccc;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+
+.journal-container input:focus,
+.journal-container textarea:focus {
+  outline: none;
+  border-color: #ff8c66;
+  box-shadow: 0 0 0 2px rgba(255, 140, 102, 0.3);
+}
+
+[data-theme="dark"] .journal-container input,
+[data-theme="dark"] .journal-container textarea {
+  background: #3a3a3a;
+  border-color: #666;
+  color: #fff; /* make text visible */
+}
+
+/* Buttons */
+.journal-container button {
+  padding: 0.8rem 1.5rem;
+  border: none;
+  border-radius: 0.75rem;
+  background: #ff8c66;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.journal-container button:hover {
+  background: #ff7043;
+}
+
+/* Past entries table */
+.journal-container table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 2rem;
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.journal-container th,
+.journal-container td {
+  padding: 0.9rem;
+  text-align: left;
+  font-size: 0.95rem;
+}
+
+.journal-container th {
+  background: #ffe0d6;
+  font-weight: 700;
+}
+
+[data-theme="dark"] .journal-container th {
+  background: #444;
+  color: #fff;
+}
+
+.journal-container tr:nth-child(even) {
+  background: #fff7f5;
+}
+
+[data-theme="dark"] .journal-container tr:nth-child(even) {
+  background: #333;
+}
+/* Fix for grey text in dark mode */
+[data-theme="dark"] .journal-form label,
+[data-theme="dark"] .journal-form h2,
+[data-theme="dark"] .journal-form h3,
+[data-theme="dark"] .journal-table th,
+[data-theme="dark"] .journal-table td {
+  color: #ffffff !important;  /* Force clear white text */
+}
+/* Darker pink border for Mood & Energy inputs */
+.journal-container #mood,
+.journal-container #energy {
+  border: 3px solid #e04a3f; /* darker and more visible pink */
+  border-radius: 0.75rem;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  background: #fff; /* optional, makes the input pop more */
+}
+
+.journal-container #mood:focus,
+.journal-container #energy:focus {
+  border-color: #ff7043; /* keep the focus effect as before */
+  box-shadow: 0 0 0 3px rgba(255, 112, 67, 0.3);
+}
+.journal-container #mood,
+.journal-container #energy {
+  background: #ffe5e0; /* light pink input background */
+}
+
