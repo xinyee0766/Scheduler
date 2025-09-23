@@ -49,6 +49,7 @@
       <a href="{{ url_for('timetable') }}">Timetable</a>
       <a href="{{ url_for('todos') }}">To-Do List</a>
       <a href="{{ url_for('calendar_view') }}">Calendar</a>
+      <a href="{{ url_for('journal') }}">Journal</a>
       <button id="themeToggle">🌙 Dark Mode</button>
     </nav>
   </header>
@@ -115,7 +116,6 @@
         data.tasks.forEach(task => {
           if (!notifiedTasks.includes(task)) {
             if ("Notification" in window && Notification.permission === "granted") {
-
               let title = "Task Reminder";
               if (task.includes("due today")) title = "Task Due Today!";
               else if (task.includes("due now")) title = "Task Due Now!";
@@ -248,49 +248,68 @@
       });
 
       // --- Pomodoro Timer ---
-      let pomoTime = parseInt(localStorage.getItem("pomoTime")) || 25 * 60;
       let interval = null;
       const timerEl = document.getElementById("pomodoro-timer");
       const startBtn = document.getElementById("start-pomo");
       const resetBtn = document.getElementById("reset-pomo");
 
-      function updateTimer() {
+      function updateTimer(pomoTime) {
         const minutes = Math.floor(pomoTime / 60).toString().padStart(2, "0");
         const seconds = (pomoTime % 60).toString().padStart(2, "0");
         timerEl.textContent = `${minutes}:${seconds}`;
-        localStorage.setItem("pomoTime", pomoTime);
       }
 
-      startBtn.addEventListener("click", () => {
-        if (!interval) {
-          interval = setInterval(() => {
-            pomoTime--;
-            updateTimer();
-            if (pomoTime <= 0) {
-              clearInterval(interval);
-              interval = null;
-              if (Notification.permission === "granted") {
-                new Notification("Pomodoro Complete!", { body: "Take a break!" });
-              } else {
-                alert("Pomodoro Complete! Take a break!");
-              }
-              localStorage.removeItem("pomoTime");
-              pomoTime = 25 * 60;
-              updateTimer();
-            }
-          }, 1000);
-        }
-      });
+      function startTimer() {
+        if (interval) return;
 
-      resetBtn.addEventListener("click", () => {
+        let pomoEndTime = localStorage.getItem("pomoEndTime");
+        if (!pomoEndTime) {
+          pomoEndTime = Date.now() + 25 * 60 * 1000;
+          localStorage.setItem("pomoEndTime", pomoEndTime);
+        }
+
+        // Immediate display
+        const remaining = Math.floor((pomoEndTime - Date.now()) / 1000);
+        updateTimer(remaining > 0 ? remaining : 0);
+
+        interval = setInterval(() => {
+          const remaining = Math.floor((localStorage.getItem("pomoEndTime") - Date.now()) / 1000);
+          if (remaining <= 0) {
+            clearInterval(interval);
+            interval = null;
+            localStorage.removeItem("pomoEndTime");
+            updateTimer(25 * 60);
+            if (Notification.permission === "granted") {
+              new Notification("Pomodoro Complete!", { body: "Take a break!" });
+            } else {
+              alert("Pomodoro Complete! Take a break!");
+            }
+          } else {
+            updateTimer(remaining);
+          }
+        }, 1000);
+      }
+
+      function resetTimer() {
         clearInterval(interval);
         interval = null;
-        pomoTime = 25 * 60;
-        updateTimer();
-      });
+        localStorage.removeItem("pomoEndTime");
+        updateTimer(25 * 60);
+      }
 
-      // Initial display
-      updateTimer();
+      startBtn.addEventListener("click", startTimer);
+      resetBtn.addEventListener("click", resetTimer);
+
+      // Resume timer if already running
+      const savedEndTime = localStorage.getItem("pomoEndTime");
+      if (savedEndTime) {
+        const remaining = Math.floor((savedEndTime - Date.now()) / 1000);
+        if (remaining > 0) startTimer();
+        else localStorage.removeItem("pomoEndTime");
+      } else {
+        updateTimer(25 * 60);
+      }
+
     });
   </script>
 </body>
