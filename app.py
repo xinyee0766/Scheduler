@@ -2,16 +2,21 @@ from flask import Flask, render_template, request, redirect, url_for, flash, jso
 import sqlite3
 import os
 from datetime import datetime, timedelta
-from models import Todo, Class, init_db
+from models import Todo, Class, init_db, UploadedFile, Journal
+from datetime import date
 from config import VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY
 from pywebpush import webpush, WebPushException
 from apscheduler.schedulers.background import BackgroundScheduler
 import json
 from werkzeug.utils import secure_filename
 import calendar as cal
+from pyfcm import FCMNotification
+from fcm_config import FCM_API_KEY
+
+push_service = FCMNotification(FCM_API_KEY)
 
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), "uploads")
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # create folder if it doesn't exist
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # ---------------------- APP SETUP ----------------------
 app = Flask(__name__)
@@ -19,7 +24,7 @@ app.secret_key = "xinyee0766"
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 DB_NAME = os.path.join(os.path.dirname(__file__), 'classes.db')
-SUBSCRIPTIONS = []  # kept for backward compatibility
+SUBSCRIPTIONS = []
 
 def get_db_connection():
     conn = sqlite3.connect(DB_NAME, timeout=10)
@@ -39,8 +44,16 @@ with get_db_connection() as conn:
             auth TEXT
         )
     """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS uploaded_files (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            filename TEXT UNIQUE,
+            path TEXT
+        )
+    """)
     conn.commit()
 
+# ---------------------- DASHBOARD ----------------------
 @app.route("/dashboard")
 def dashboard():
     return render_template("dashboard.html")
@@ -183,7 +196,6 @@ def todos():
         all_todos = Todo.all()
         return render_template("todos.html", todos=all_todos)
 
-
 @app.route("/todos/add", methods=["GET", "POST"])
 def add_todo():
     if request.method == "POST":
@@ -201,7 +213,6 @@ def add_todo():
         flash("Task added successfully!", "success")
         return redirect(url_for("todos"))
     return render_template("add_todo.html")
-
 
 @app.route("/todos/edit/<int:todo_id>", methods=["GET", "POST"])
 def edit_todo(todo_id):
@@ -232,8 +243,6 @@ def edit_todo(todo_id):
 
     return render_template("edit_todo.html", todo=todo)
 
-
-# ✅ NEW ROUTE ADDED
 @app.route("/todos/delete/<int:todo_id>", methods=["POST"])
 def delete_todo(todo_id):
     todo = Todo.get_by_id(todo_id)
@@ -244,6 +253,47 @@ def delete_todo(todo_id):
     todo.delete()
     flash("Task deleted successfully!", "success")
     return redirect(url_for("todos"))
+
+
+# ---------------------- JOURNAL ROUTES ----------------------
+with get_db_connection() as conn:
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS journal (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            entry_date TEXT NOT NULL,
+            mood INTEGER NOT NULL,
+            energy INTEGER NOT NULL,
+            notes TEXT
+        )
+    """)
+    conn.commit()
+
+@app.route("/journal", methods=["GET", "POST"])
+def journal():
+    with get_db_connection() as conn:
+        if request.method == "POST":
+            entry_date = request.form["entry_date"]
+            mood = request.form["mood"]
+            energy = request.form["energy"]
+            notes = request.form.get("notes", "")
+
+            conn.execute(
+                "INSERT INTO journal (entry_date, mood, energy, notes) VALUES (?, ?, ?, ?)",
+                (entry_date, mood, energy, notes),
+            )
+            conn.commit()
+            flash("Journal entry saved!")
+            return redirect(url_for("journal"))
+
+        entries = conn.execute(
+            "SELECT entry_date, mood, energy, notes FROM journal ORDER BY entry_date DESC"
+        ).fetchall()
+
+    return render_template(
+        "mood_journal.html",
+        entries=entries,
+        today=date.today().strftime("%Y-%m-%d"),
+    )
 
 # ---------------------- NOTIFICATION CHECK ----------------------
 @app.route("/todos/check")
@@ -257,17 +307,14 @@ def check_due_tasks():
             continue
         due_date = datetime.strptime(str(t.due_date), "%Y-%m-%d").date()
         due_time = datetime.strptime(t.due_time, "%H:%M").time() if t.due_time else None
+        due_dt = datetime.combine(due_date, due_time) if due_time else datetime.combine(due_date, datetime.min.time())
 
-        if due_date == now.date():
-            if not due_time or now < datetime.combine(due_date, due_time):
-                tasks.append(f"{t.task} (due today)")
-
-        if due_time:
-            due_dt = datetime.combine(due_date, due_time)
-            if abs((now - due_dt).total_seconds()) < 120:
-                tasks.append(f"{t.task} (due now)")
-            if abs((now - (due_dt + timedelta(minutes=10))).total_seconds()) < 120:
-                tasks.append(f"{t.task} (overdue 10 min)")
+        if due_date == now.date() and (not due_time or now < due_dt):
+            tasks.append(f"{t.task} (due today)")
+        if due_time and 0 <= (now - due_dt).total_seconds() < 120:
+            tasks.append(f"{t.task} (due now)")
+        if due_time and (now - due_dt).total_seconds() >= 600:
+            tasks.append(f"{t.task} (overdue 10 min)")
 
     return jsonify({"tasks": tasks})
 
@@ -328,19 +375,16 @@ def check_and_notify():
     tasks = []
 
     for t in all_todos:
-        if not t.due_date:
+        if not t.due_date or t.is_done:
             continue
         due_date = datetime.strptime(str(t.due_date), "%Y-%m-%d").date()
         due_time = datetime.strptime(t.due_time, "%H:%M").time() if t.due_time else None
+        due_dt = datetime.combine(due_date, due_time) if due_time else datetime.combine(due_date, datetime.min.time())
 
-        if due_time:
-            due_dt = datetime.combine(due_date, due_time)
-            diff = (now - due_dt).total_seconds()
-
-            if 0 <= diff < 120:   # due now
-                tasks.append(f"{t.task} (due now)")
-            elif 600 <= diff < 720:  # 10 min overdue
-                tasks.append(f"{t.task} (overdue 10 min)")
+        if due_time and 0 <= (now - due_dt).total_seconds() < 60:
+            tasks.append(f"{t.task} (due now)")
+        elif due_time and (now - due_dt).total_seconds() >= 600:
+            tasks.append(f"{t.task} (overdue 10 min)")
 
     if tasks:
         with get_db_connection() as conn:
@@ -358,9 +402,9 @@ if not scheduler.get_jobs():
     scheduler.add_job(check_and_notify, trigger="interval", minutes=1)
 scheduler.start()
 
+# ---------------------- FILE UPLOADS ----------------------
 @app.route("/dashboard/upload", methods=["POST"])
 def upload_files():
-    # Get all files from the request
     files = request.files.getlist("files[]")
     saved_files = []
 
@@ -370,111 +414,134 @@ def upload_files():
         filename = secure_filename(f.filename)
         save_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         f.save(save_path)
+
+        with get_db_connection() as conn:
+            conn.execute("""
+                INSERT OR IGNORE INTO uploaded_files (filename, path)
+                VALUES (?, ?)
+            """, (filename, f"/uploads/{filename}"))
+            conn.commit()
+
         saved_files.append(filename)
 
     return jsonify({"uploaded": saved_files})
+
+@app.route("/dashboard/files")
+def get_uploaded_files():
+    with get_db_connection() as conn:
+        rows = conn.execute("SELECT * FROM uploaded_files").fetchall()
+    files = [{"filename": r["filename"], "path": r["path"]} for r in rows]
+    return jsonify(files)
 
 @app.route("/uploads/<filename>")
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
+@app.route("/dashboard/delete_file", methods=["POST"])
+def delete_file():
+    data = request.get_json()
+    filename = data.get("filename")
+    if not filename:
+        return jsonify({"error": "No filename provided"}), 400
+
+    with get_db_connection() as conn:
+        conn.execute("DELETE FROM uploaded_files WHERE filename=?", (filename,))
+        conn.commit()
+
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    if os.path.exists(file_path):
+        os.remove(file_path)
+
+    return jsonify({"success": True})
+
+@app.route("/dashboard/delete_all_files", methods=["POST"])
+def delete_all_files():
+    with get_db_connection() as conn:
+        conn.execute("DELETE FROM uploaded_files")
+        conn.commit()
+
+    for f in os.listdir(app.config['UPLOAD_FOLDER']):
+        os.remove(os.path.join(app.config['UPLOAD_FOLDER'], f))
+
+    return jsonify({"success": True})
+
+# ---------------------- CALENDAR ----------------------
 @app.route('/calendar')
 def calendar_view():
-    # Get current year and month from query parameters or use current date
     year = int(request.args.get('year', datetime.now().year))
     month = int(request.args.get('month', datetime.now().month))
-    
-    # Calculate previous and next month
-    if month == 1:
-        prev_year, prev_month = year - 1, 12
-    else:
-        prev_year, prev_month = year, month - 1
-        
-    if month == 12:
-        next_year, next_month = year + 1, 1
-    else:
-        next_year, next_month = year, month + 1
-    
-    # Create calendar matrix
-    cal_obj = cal.Calendar(firstweekday=6)  # Sunday as first day (6=Sunday)
+
+    prev_year, prev_month = (year - 1, 12) if month == 1 else (year, month - 1)
+    next_year, next_month = (year + 1, 1) if month == 12 else (year, month + 1)
+
+    cal_obj = cal.Calendar(firstweekday=6)
     month_days = cal_obj.monthdayscalendar(year, month)
-    
-    # Convert to our format
+
     weeks = []
     today = datetime.now().date()
-    
+
     for week in month_days:
         week_data = []
         for day in week:
-            if day == 0:  # Day from previous/next month
-                week_data.append({
-                    'day': '',
-                    'current_month': False,
-                    'is_today': False,
-                    'events': []  # Empty events for non-current month days
-                })
+            if day == 0:
+                week_data.append({'day': '', 'current_month': False, 'is_today': False, 'events': []})
             else:
                 day_date = datetime(year, month, day).date()
                 week_data.append({
                     'day': day,
                     'current_month': True,
                     'is_today': (day_date == today),
-                    'events': get_events_for_date(day_date)  # Get real events from database
+                    'events': get_events_for_date(day_date)
                 })
         weeks.append(week_data)
-    
+
     return render_template('calendar.html',
-                         calendar=weeks,
-                         month_name=datetime(year, month, 1).strftime('%B'),
-                         year=year,
-                         prev_year=prev_year,
-                         prev_month=prev_month,
-                         next_year=next_year,
-                         next_month=next_month)
+                           calendar=weeks,
+                           month_name=datetime(year, month, 1).strftime('%B'),
+                           year=year,
+                           prev_year=prev_year,
+                           prev_month=prev_month,
+                           next_year=next_year,
+                           next_month=next_month)
 
 def get_events_for_date(date):
-    """Get tasks/events for a specific date from the database"""
     date_str = date.strftime("%Y-%m-%d")
-    
     with get_db_connection() as conn:
-        # Get todos for this date
         rows = conn.execute(
             "SELECT * FROM todos WHERE due_date = ? ORDER BY due_time",
             (date_str,)
         ).fetchall()
-        
-        events = []
-        for row in rows:
-            todo = Todo(**dict(row))
-            events.append({
-                'id': todo.id,
-                'title': todo.task,
-                'time': todo.due_time if todo.due_time else 'All Day',
-                'color': '#ff8c66' if not todo.is_done else '#888888'  # Orange for pending, gray for completed
-            })
-        
-        return events
-    
+    events = []
+    for row in rows:
+        todo = Todo(**dict(row))
+        events.append({
+            'id': todo.id,
+            'title': todo.task,
+            'time': todo.due_time if todo.due_time else 'All Day',
+            'color': '#ff8c66' if not todo.is_done else '#888888'
+        })
+    return events
+
 @app.route('/todo_details/<int:todo_id>')
 def todo_details(todo_id):
     todo = Todo.get_by_id(todo_id)
     if not todo:
         flash("Task not found", "error")
         return redirect(url_for('calendar_view'))
-    
     return render_template('todo_details.html', todo=todo)
 
+# ---------------------- HOME ----------------------
 @app.route('/')
 def home():
     current_date = datetime.now().strftime("%A, %B %d, %Y")
     current_day = datetime.now().strftime("%A")
-    
+
     with get_db_connection() as conn:
         today_classes = conn.execute(
             "SELECT * FROM classes WHERE day = ? ORDER BY start_time",
             (current_day,)
         ).fetchall()
-    
+
     today_str = datetime.now().strftime("%Y-%m-%d")
     today_tasks = []
     with get_db_connection() as conn:
@@ -483,15 +550,15 @@ def home():
             (today_str,)
         ).fetchall()
         today_tasks = [Todo(**dict(row)) for row in rows]
-    
-    completed_tasks = sum(1 for task in today_tasks if task.is_done)
-    
+
+    completed_tasks = sum(1 for t in today_tasks if t.is_done)
+    total_tasks = len(today_tasks)
     return render_template('home.html',
-                         current_date=current_date,
-                         today_classes=today_classes,
-                         today_tasks=today_tasks,
-                         completed_tasks=completed_tasks)
-    
-# ---------------------- RUN APP ----------------------
+                           current_date=current_date,
+                           today_classes=today_classes,
+                           today_tasks=today_tasks,
+                           completed_tasks=completed_tasks,
+                           total_tasks=total_tasks)
+
 if __name__ == "__main__":
-    app.run(debug=True, use_reloader=False)
+    app.run(debug=True)

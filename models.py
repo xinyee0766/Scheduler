@@ -34,6 +34,17 @@ def init_db():
                 is_done INTEGER DEFAULT 0
             )
         ''')
+        # NEW: journal table
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS journal (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                entry_date TEXT NOT NULL,
+                mood INTEGER NOT NULL,
+                energy INTEGER NOT NULL,
+                notes TEXT
+            )
+        ''')
+        conn.commit()
 
 # ---------------------- CLASS MODEL ----------------------
 class Class:
@@ -122,25 +133,91 @@ class Todo:
         with get_db_connection() as conn:
             conn.execute("DELETE FROM todos WHERE id=?", (self.id,))
 
+    @staticmethod
     def get_events_for_date(date):
         """Get tasks/events for a specific date from the database"""
         date_str = date.strftime("%Y-%m-%d")
-    
         with get_db_connection() as conn:
-        # Get todos for this date
             rows = conn.execute(
                 "SELECT * FROM todos WHERE due_date = ? ORDER BY due_time",
                 (date_str,)
             ).fetchall()
-        
-            events = []
-            for row in rows:
-                todo = Todo(**dict(row))
-                events.append({
-                    'id': todo.id,
-                    'title': todo.task,
-                    'time': todo.due_time if todo.due_time else 'All Day',
-                    'color': '#FFD6BA' if not todo.is_done else '#888888'  # Different color for completed tasks
-                })
-        
-            return events
+        events = []
+        for row in rows:
+            todo = Todo(**dict(row))
+            events.append({
+                'id': todo.id,
+                'title': todo.task,
+                'time': todo.due_time if todo.due_time else 'All Day',
+                'color': '#FFD6BA' if not todo.is_done else '#888888'
+            })
+        return events
+
+# ---------------------- JOURNAL MODEL ----------------------
+class Journal:
+    def __init__(self, id=None, entry_date=None, mood=5, energy=5, notes=""):
+        self.id = id
+        self.entry_date = entry_date
+        self.mood = mood
+        self.energy = energy
+        self.notes = notes
+
+    @staticmethod
+    def all(limit=200):
+        with get_db_connection() as conn:
+            rows = conn.execute("SELECT * FROM journal ORDER BY entry_date DESC LIMIT ?", (limit,)).fetchall()
+            return [Journal(**dict(r)) for r in rows]
+
+    @staticmethod
+    def get(entry_id):
+        with get_db_connection() as conn:
+            row = conn.execute("SELECT * FROM journal WHERE id=?", (entry_id,)).fetchone()
+            return Journal(**dict(row)) if row else None
+
+    def save(self):
+        with get_db_connection() as conn:
+            if self.id:
+                conn.execute('''
+                    UPDATE journal
+                    SET entry_date=?, mood=?, energy=?, notes=? WHERE id=?
+                ''', (self.entry_date, self.mood, self.energy, self.notes, self.id))
+            else:
+                cur = conn.execute('''
+                    INSERT INTO journal (entry_date, mood, energy, notes)
+                    VALUES (?, ?, ?, ?)
+                ''', (self.entry_date, self.mood, self.energy, self.notes))
+                self.id = cur.lastrowid
+            conn.commit()
+
+    def delete(self):
+        with get_db_connection() as conn:
+            conn.execute("DELETE FROM journal WHERE id=?", (self.id,))
+            conn.commit()
+
+# ---------------------- UPLOADED FILE MODEL ----------------------
+class UploadedFile:
+    def __init__(self, id=None, filename=None, path=None):
+        self.id = id
+        self.filename = filename
+        self.path = path
+
+    def save(self):
+        with get_db_connection() as conn:
+            if self.id:
+                conn.execute(
+                    "UPDATE uploaded_files SET filename=?, path=? WHERE id=?",
+                    (self.filename, self.path, self.id)
+                )
+            else:
+                cur = conn.execute(
+                    "INSERT OR IGNORE INTO uploaded_files (filename, path) VALUES (?, ?)",
+                    (self.filename, self.path)
+                )
+                self.id = cur.lastrowid
+            conn.commit()
+
+    @classmethod
+    def all(cls):
+        with get_db_connection() as conn:
+            rows = conn.execute("SELECT * FROM uploaded_files").fetchall()
+            return [cls(**dict(r)) for r in rows]

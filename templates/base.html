@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <title>{% block title %}ByeByeLastMinute{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     /* Quote styling */
     #quote-container {
@@ -49,15 +49,14 @@
       <a href="{{ url_for('timetable') }}">Timetable</a>
       <a href="{{ url_for('todos') }}">To-Do List</a>
       <a href="{{ url_for('calendar_view') }}">Calendar</a>
+      <a href="{{ url_for('journal') }}">Journal</a>
       <button id="themeToggle">🌙 Dark Mode</button>
     </nav>
   </header>
 
-  <!-- Motivational Quote -->
-  <div id="quote-container"></div>
-
   <!-- Main Content -->
   <main class="container">
+    <!-- Flash Messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         <div class="flash-messages">
@@ -67,6 +66,9 @@
         </div>
       {% endif %}
     {% endwith %}
+
+    <!-- Motivational Quote -->
+    <div id="quote-container"></div>
 
     <!-- Pomodoro Timer -->
     <div id="pomodoro-container">
@@ -84,21 +86,25 @@
 
   <!-- Notification Permission -->
   <script>
-    if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
-      Notification.requestPermission();
+    if ("Notification" in window) {
+      if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+        Notification.requestPermission().then(permission => {
+          console.log("Notification permission:", permission);
+        });
+      }
     }
   </script>
 
   <!-- Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/static/service-worker.js')
+      navigator.serviceWorker.register('{{ url_for("static", filename="service-worker.js") }}')
       .then(reg => console.log('Service Worker registered', reg))
       .catch(err => console.error('SW registration failed', err));
     }
   </script>
 
-  <!-- Poll due tasks -->
+  <!-- Poll Due Tasks -->
   <script>
     const notifiedTasks = JSON.parse(localStorage.getItem("notifiedTasks") || "[]");
 
@@ -109,8 +115,13 @@
 
         data.tasks.forEach(task => {
           if (!notifiedTasks.includes(task)) {
-            if (Notification.permission === "granted") {
-              new Notification("Task Due Today!", {
+            if ("Notification" in window && Notification.permission === "granted") {
+              let title = "Task Reminder";
+              if (task.includes("due today")) title = "Task Due Today!";
+              else if (task.includes("due now")) title = "Task Due Now!";
+              else if (task.includes("overdue 10 min")) title = "Task Overdue!";
+
+              new Notification(title, {
                 body: task,
                 icon: "{{ url_for('static', filename='icon.png') }}",
                 requireInteraction: true
@@ -126,11 +137,11 @@
       }
     }
 
-    setInterval(checkDueTasks, 60000);
+    setInterval(checkDueTasks, 60000); // every 1 min
     checkDueTasks();
   </script>
 
-  <!-- Push subscription -->
+  <!-- Push Subscription -->
   <script>
     function urlBase64ToUint8Array(base64String) {
       const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -160,14 +171,13 @@
         console.error("Subscription error:", err);
       }
     }
-
-    subscribeUser();
+    window.addEventListener("load", subscribeUser);
   </script>
 
-  <!-- Dark mode toggle -->
+  <!-- Dark Mode Toggle -->
   <script src="{{ url_for('static', filename='darkModeToggle.js') }}" defer></script>
 
-  <!-- Motivational Quote, Confetti & Pomodoro -->
+  <!-- Quote, Confetti & Pomodoro JS -->
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       // --- Motivational Quote ---
@@ -228,6 +238,7 @@
       }
       drawConfetti();
 
+      // Confetti on task checkboxes
       const tasks = document.querySelectorAll(".task-checkbox");
       tasks.forEach(task => {
         if (task.checked) launchConfetti();
@@ -236,54 +247,70 @@
         });
       });
 
-    
-    // --- Pomodoro Timer  ---
-let pomoTime = parseInt(localStorage.getItem("pomoTime")) || 25 * 60;
-let interval = null;
-const timerEl = document.getElementById("pomodoro-timer");
-const startBtn = document.getElementById("start-pomo");
-const resetBtn = document.getElementById("reset-pomo");
+      // --- Pomodoro Timer ---
+      let interval = null;
+      const timerEl = document.getElementById("pomodoro-timer");
+      const startBtn = document.getElementById("start-pomo");
+      const resetBtn = document.getElementById("reset-pomo");
 
-function updateTimer() {
-  const minutes = Math.floor(pomoTime / 60).toString().padStart(2, "0");
-  const seconds = (pomoTime % 60).toString().padStart(2, "0");
-  timerEl.textContent = `${minutes}:${seconds}`;
-  localStorage.setItem("pomoTime", pomoTime);
-}
+      function updateTimer(pomoTime) {
+        const minutes = Math.floor(pomoTime / 60).toString().padStart(2, "0");
+        const seconds = (pomoTime % 60).toString().padStart(2, "0");
+        timerEl.textContent = `${minutes}:${seconds}`;
+      }
 
-// Start button
-startBtn.addEventListener("click", () => {
-  if (!interval) {
-    interval = setInterval(() => {
-      pomoTime--;
-      updateTimer();
-      if (pomoTime <= 0) {
+      function startTimer() {
+        if (interval) return;
+
+        let pomoEndTime = localStorage.getItem("pomoEndTime");
+        if (!pomoEndTime) {
+          pomoEndTime = Date.now() + 25 * 60 * 1000;
+          localStorage.setItem("pomoEndTime", pomoEndTime);
+        }
+
+        // Immediate display
+        const remaining = Math.floor((pomoEndTime - Date.now()) / 1000);
+        updateTimer(remaining > 0 ? remaining : 0);
+
+        interval = setInterval(() => {
+          const remaining = Math.floor((localStorage.getItem("pomoEndTime") - Date.now()) / 1000);
+          if (remaining <= 0) {
+            clearInterval(interval);
+            interval = null;
+            localStorage.removeItem("pomoEndTime");
+            updateTimer(25 * 60);
+            if (Notification.permission === "granted") {
+              new Notification("Pomodoro Complete!", { body: "Take a break!" });
+            } else {
+              alert("Pomodoro Complete! Take a break!");
+            }
+          } else {
+            updateTimer(remaining);
+          }
+        }, 1000);
+      }
+
+      function resetTimer() {
         clearInterval(interval);
         interval = null;
-        if (Notification.permission === "granted") {
-  new Notification("Pomodoro Complete!", { body: "Take a break!" });
-} else {
-  alert("Pomodoro Complete! Take a break!");
-}
-
-        localStorage.removeItem("pomoTime");
+        localStorage.removeItem("pomoEndTime");
+        updateTimer(25 * 60);
       }
-    }, 1000);
-  }
-});
 
-// Reset button
-resetBtn.addEventListener("click", () => {
-  clearInterval(interval);
-  interval = null;
-  pomoTime = 25 * 60;
-  updateTimer();
-});
+      startBtn.addEventListener("click", startTimer);
+      resetBtn.addEventListener("click", resetTimer);
 
-// Initial display
-updateTimer();
-});
+      // Resume timer if already running
+      const savedEndTime = localStorage.getItem("pomoEndTime");
+      if (savedEndTime) {
+        const remaining = Math.floor((savedEndTime - Date.now()) / 1000);
+        if (remaining > 0) startTimer();
+        else localStorage.removeItem("pomoEndTime");
+      } else {
+        updateTimer(25 * 60);
+      }
 
+    });
   </script>
 </body>
 </html>
