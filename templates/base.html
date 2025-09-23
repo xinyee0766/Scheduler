@@ -1,10 +1,42 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <title>{% block title %}ByeByeLastMinute{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    /* Quote styling */
+    #quote-container {
+      text-align: center;
+      margin: 20px 0;
+      font-size: 18px;
+      font-weight: bold;
+      color: #ffd700;
+    }
+
+    /* Confetti canvas full-screen */
+    #confetti-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* Pomodoro Timer styling */
+    #pomodoro-container {
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    #pomodoro-timer {
+      font-size: 2rem;
+      margin: 10px 0;
+    }
+  </style>
 </head>
 <body>
   <!-- Header and Navbar -->
@@ -17,11 +49,13 @@
       <a href="{{ url_for('timetable') }}">Timetable</a>
       <a href="{{ url_for('todos') }}">To-Do List</a>
       <a href="{{ url_for('calendar_view') }}">Calendar</a>
+      <button id="themeToggle">🌙 Dark Mode</button>
     </nav>
   </header>
 
   <!-- Main Content -->
   <main class="container">
+    <!-- Flash Messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         <div class="flash-messages">
@@ -32,8 +66,22 @@
       {% endif %}
     {% endwith %}
 
+    <!-- Motivational Quote -->
+    <div id="quote-container"></div>
+
+    <!-- Pomodoro Timer -->
+    <div id="pomodoro-container">
+      <h3>Pomodoro Timer</h3>
+      <div id="pomodoro-timer">25:00</div>
+      <button id="start-pomo" class="button">Start</button>
+      <button id="reset-pomo" class="button secondary">Reset</button>
+    </div>
+
     {% block content %}{% endblock %}
   </main>
+
+  <!-- Confetti Canvas -->
+  <canvas id="confetti-canvas"></canvas>
 
   <!-- Notification Permission -->
   <script>
@@ -49,13 +97,13 @@
   <!-- Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/static/service-worker.js')
+      navigator.serviceWorker.register('{{ url_for("static", filename="service-worker.js") }}')
       .then(reg => console.log('Service Worker registered', reg))
       .catch(err => console.error('SW registration failed', err));
     }
   </script>
 
-  <!-- Poll due tasks -->
+  <!-- Poll Due Tasks -->
   <script>
     const notifiedTasks = JSON.parse(localStorage.getItem("notifiedTasks") || "[]");
 
@@ -67,7 +115,13 @@
         data.tasks.forEach(task => {
           if (!notifiedTasks.includes(task)) {
             if ("Notification" in window && Notification.permission === "granted") {
-              new Notification("Task Due Today!", {
+
+              let title = "Task Reminder";
+              if (task.includes("due today")) title = "Task Due Today!";
+              else if (task.includes("due now")) title = "Task Due Now!";
+              else if (task.includes("overdue 10 min")) title = "Task Overdue!";
+
+              new Notification(title, {
                 body: task,
                 icon: "{{ url_for('static', filename='icon.png') }}",
                 requireInteraction: true
@@ -84,10 +138,10 @@
     }
 
     setInterval(checkDueTasks, 60000); // every 1 min
-    checkDueTasks(); // immediate check
+    checkDueTasks();
   </script>
 
-  <!-- Push subscription -->
+  <!-- Push Subscription -->
   <script>
     function urlBase64ToUint8Array(base64String) {
       const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -117,8 +171,127 @@
         console.error("Subscription error:", err);
       }
     }
+    window.addEventListener("load", subscribeUser);
+  </script>
 
-    subscribeUser();
+  <!-- Dark Mode Toggle -->
+  <script src="{{ url_for('static', filename='darkModeToggle.js') }}" defer></script>
+
+  <!-- Quote, Confetti & Pomodoro JS -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // --- Motivational Quote ---
+      const quotes = [
+        "Keep going, your assignment won’t do itself!",
+        "Small steps every day lead to big results.",
+        "Stay focused, stay productive!",
+        "You got this, one task at a time.",
+        "Take breaks, then crush your goals!"
+      ];
+      document.getElementById("quote-container").textContent =
+        quotes[Math.floor(Math.random() * quotes.length)];
+
+      // --- Confetti ---
+      const canvas = document.getElementById("confetti-canvas");
+      const ctx = canvas.getContext("2d");
+      let confettis = [];
+
+      function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+      window.addEventListener("resize", resizeCanvas);
+      resizeCanvas();
+
+      function launchConfetti() {
+        const confettiCount = 150;
+        confettis = [];
+        for (let i = 0; i < confettiCount; i++) {
+          confettis.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height - canvas.height,
+            r: Math.random() * 6 + 4,
+            d: Math.random() * confettiCount,
+            color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+            tilt: Math.random() * 10 - 10,
+            tiltAngle: 0,
+            tiltAngleIncrement: Math.random() * 0.07 + 0.05
+          });
+        }
+      }
+
+      function drawConfetti() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        confettis.forEach(c => {
+          ctx.beginPath();
+          ctx.lineWidth = c.r / 2;
+          ctx.strokeStyle = c.color;
+          ctx.moveTo(c.x + c.tilt + c.r/4, c.y);
+          ctx.lineTo(c.x + c.tilt, c.y + c.tilt + c.r/4);
+          ctx.stroke();
+          c.tiltAngle += c.tiltAngleIncrement;
+          c.y += (Math.cos(c.d) + 3 + c.r/2)/2;
+          c.tilt = Math.sin(c.tiltAngle) * 15;
+          if(c.y > canvas.height) c.y = -10;
+        });
+        requestAnimationFrame(drawConfetti);
+      }
+      drawConfetti();
+
+      // Confetti on task checkboxes
+      const tasks = document.querySelectorAll(".task-checkbox");
+      tasks.forEach(task => {
+        if (task.checked) launchConfetti();
+        task.addEventListener("change", e => {
+          if (e.target.checked) launchConfetti();
+        });
+      });
+
+      // --- Pomodoro Timer ---
+      let pomoTime = parseInt(localStorage.getItem("pomoTime")) || 25 * 60;
+      let interval = null;
+      const timerEl = document.getElementById("pomodoro-timer");
+      const startBtn = document.getElementById("start-pomo");
+      const resetBtn = document.getElementById("reset-pomo");
+
+      function updateTimer() {
+        const minutes = Math.floor(pomoTime / 60).toString().padStart(2, "0");
+        const seconds = (pomoTime % 60).toString().padStart(2, "0");
+        timerEl.textContent = `${minutes}:${seconds}`;
+        localStorage.setItem("pomoTime", pomoTime);
+      }
+
+      startBtn.addEventListener("click", () => {
+        if (!interval) {
+          interval = setInterval(() => {
+            pomoTime--;
+            updateTimer();
+            if (pomoTime <= 0) {
+              clearInterval(interval);
+              interval = null;
+              if (Notification.permission === "granted") {
+                new Notification("Pomodoro Complete!", { body: "Take a break!" });
+              } else {
+                alert("Pomodoro Complete! Take a break!");
+              }
+              localStorage.removeItem("pomoTime");
+              pomoTime = 25 * 60;
+              updateTimer();
+            }
+          }, 1000);
+        }
+      });
+
+      resetBtn.addEventListener("click", () => {
+        clearInterval(interval);
+        interval = null;
+        pomoTime = 25 * 60;
+        updateTimer();
+      });
+
+      // Initial display
+      updateTimer();
+    });
   </script>
 </body>
 </html>
