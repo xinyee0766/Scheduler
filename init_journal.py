@@ -1,8 +1,12 @@
 import sqlite3
+import os
 
-conn = sqlite3.connect("database.db")
+# Use the same database as your Flask app
+DB_NAME = os.path.join(os.path.dirname(__file__), 'classes.db')
+conn = sqlite3.connect(DB_NAME)
 c = conn.cursor()
 
+# Create the journal table if it doesn't exist
 c.execute("""
 CREATE TABLE IF NOT EXISTS journal (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -16,4 +20,4 @@ CREATE TABLE IF NOT EXISTS journal (
 conn.commit()
 conn.close()
 
-print("✅ Journal table created successfully!")
+print("✅ Journal table created successfully in classes.db!")
