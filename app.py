@@ -27,8 +27,9 @@ SUBSCRIPTIONS = []
 
 def get_db_connection():
     conn = sqlite3.connect(DB_NAME, timeout=10)
-    conn.row_factory = sqlite3.Row
+    conn.row_factory = sqlite3.Row  
     return conn
+
 
 # Initialize database
 init_db()
@@ -267,6 +268,7 @@ with get_db_connection() as conn:
     """)
     conn.commit()
 
+# View/Add journal entries
 @app.route("/journal", methods=["GET", "POST"])
 def journal():
     with get_db_connection() as conn:
@@ -278,14 +280,15 @@ def journal():
 
             conn.execute(
                 "INSERT INTO journal (entry_date, mood, energy, notes) VALUES (?, ?, ?, ?)",
-                (entry_date, mood, energy, notes),
+                (entry_date, mood, energy, notes)
             )
             conn.commit()
-            flash("Journal entry saved!")
+            flash("Journal entry saved!", "success")
             return redirect(url_for("journal"))
 
+        # Include 'id' so edit/delete URLs work
         entries = conn.execute(
-            "SELECT entry_date, mood, energy, notes FROM journal ORDER BY entry_date DESC"
+            "SELECT id, entry_date, mood, energy, notes FROM journal ORDER BY entry_date DESC"
         ).fetchall()
 
     return render_template(
@@ -293,6 +296,41 @@ def journal():
         entries=entries,
         today=date.today().strftime("%Y-%m-%d"),
     )
+
+# Edit a journal entry
+@app.route("/journal/edit/<int:entry_id>", methods=["GET", "POST"])
+def edit_journal(entry_id):
+    with get_db_connection() as conn:
+        entry = conn.execute("SELECT * FROM journal WHERE id=?", (entry_id,)).fetchone()
+        if not entry:
+            flash("Journal entry not found", "error")
+            return redirect(url_for("journal"))
+
+        if request.method == "POST":
+            entry_date = request.form["entry_date"]
+            mood = request.form["mood"]
+            energy = request.form["energy"]
+            notes = request.form.get("notes", "")
+
+            conn.execute("""
+                UPDATE journal
+                SET entry_date=?, mood=?, energy=?, notes=?
+                WHERE id=?
+            """, (entry_date, mood, energy, notes, entry_id))
+            conn.commit()
+            flash("Journal entry updated!", "success")
+            return redirect(url_for("journal"))
+
+    return render_template("edit_journal.html", entry=entry)
+
+# Delete a journal entry
+@app.route("/journal/delete/<int:entry_id>", methods=["POST"])
+def delete_journal(entry_id):
+    with get_db_connection() as conn:
+        conn.execute("DELETE FROM journal WHERE id=?", (entry_id,))
+        conn.commit()
+    flash("Journal entry deleted!", "success")
+    return redirect(url_for("journal"))
 
 # ---------------------- NOTIFICATION CHECK ----------------------
 @app.route("/todos/check")
