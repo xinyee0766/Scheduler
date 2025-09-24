@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Mood & Energy Journal{% endblock %}
+
+{% block content %}
+<h2>Mood & Energy Journal</h2>
+
+<form method="POST" class="journal-form">
+  <label for="entry_date">Date:</label>
+  <input type="date" id="entry_date" name="entry_date" value="{{ today }}" required>
+
+  <label for="mood">Mood (1-10):</label>
+  <input type="number" id="mood" name="mood" min="1" max="10" required>
+
+  <label for="energy">Energy (1-10):</label>
+  <input type="number" id="energy" name="energy" min="1" max="10" required>
+
+  <label for="notes">Notes:</label>
+  <textarea id="notes" name="notes" rows="3"></textarea>
+
+  <button type="submit" class="button">Save Entry</button>
+</form>
+
+<hr>
+
+<h3>Past Entries</h3>
+<table class="journal-table">
+  <thead>
+    <tr>
+      <th>Date</th>
+      <th>Mood</th>
+      <th>Energy</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for entry in entries %}
+    <tr>
+      <td>{{ entry.entry_date }}</td>
+      <td>{{ entry.mood }}</td>
+      <td>{{ entry.energy }}</td>
+      <td>{{ entry.notes }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4">No journal entries yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
