@@ -3,32 +3,67 @@
 {% block title %}Edit Task{% endblock %}
 
 {% block content %}
-<h1>Edit Task</h1>
+<main class="container">
+  <h1>Edit Task</h1>
 
-<form method="POST" class="grid">
-  <label>
-    Task
-    <input type="text" name="task" value="{{ todo.task }}" required>
-  </label>
-
-  <label>
-    Due Date
-    <input type="date" name="due_date" value="{{ todo.due_date }}" required>
-  </label>
-
-  <label>
-    Due Time
-    <input type="time" name="due_time" value="{{ todo.due_time or '' }}">
-  </label>
-
-  <div style="display:flex; align-items:center; gap:10px; margin-top:15px;">
-    <input type="checkbox" name="is_done" id="is_done" class="task-checkbox" {% if todo.is_done %}checked{% endif %}>
-    <label for="is_done">Mark as done</label>
+  <!-- Flash messages -->
+  <div class="flash-messages">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
   </div>
 
-  <div class="actions">
-    <button type="submit" class="button">Save</button>
-    <a href="{{ url_for('todos') }}" class="button secondary">Cancel</a>
-  </div>
-</form>
+  <form method="POST" class="grid">
+    <label>
+      Task
+      <input type="text" name="task" value="{{ todo.task }}" required>
+    </label>
+
+    <label>
+      Due Date
+      <input type="date" name="due_date" value="{{ todo.due_date }}" required>
+    </label>
+
+    <label>
+      Due Time
+      <input type="time" name="due_time" value="{{ todo.due_time or '' }}">
+    </label>
+
+    <!-- Checkbox with better alignment -->
+    <div style="display: flex; align-items: center; gap: 10px; margin-top: 15px;">
+      <input type="checkbox" name="is_done" id="is_done" class="task-checkbox"
+             {% if todo.is_done %}checked{% endif %} 
+             style="margin: 0; width: 18px; height: 18px;">
+      <label for="is_done" style="margin: 0; font-weight: 500; cursor: pointer;">Mark as done</label>
+    </div>
+
+    <div class="actions" style="margin-top: 15px;">
+      <button type="submit" class="button">Save</button>
+      <a href="{{ url_for('todos') }}" class="button secondary">Cancel</a>
+    </div>
+  </form>
+</main>
+
+<!-- Confetti trigger for checkbox -->
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const taskCheckbox = document.querySelector(".task-checkbox");
+
+    // Launch confetti if already checked
+    if (taskCheckbox.checked && typeof launchConfetti === "function") {
+      launchConfetti();
+    }
+
+    // Launch confetti on change
+    taskCheckbox.addEventListener("change", (e) => {
+      if (e.target.checked && typeof launchConfetti === "function") {
+        launchConfetti();
+      }
+    });
+  });
+</script>
 {% endblock %}
