@@ -1,809 +1,95 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Reminder Dashboard</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <!-- Control-->
-  <div class="controls">
-    <h4>Color Theme</h4>
-    <div class="color-picker">
-      <div class="color-option" data-theme="default" style="background: #e0f7fa;"></div>
-      <div class="color-option" data-theme="dark" style="background: #2c3e50;"></div>
-      <div class="color-option" data-theme="green" style="background: #e8f5e8;"></div>
-      <div class="color-option" data-theme="purple" style="background: #f3e5f5;"></div>
-    </div>
+{% extends "base.html" %}
+{% block title %}Reminder Dashboard{% endblock %}
+
+{% block content %}
+<main class="container reminder-container">
+
+  <!-- Controls -->
+  <section class="controls">
+    <h2>Settings</h2>
     <div class="notification-toggle">
       <input type="checkbox" id="notificationToggle">
       <label for="notificationToggle">Enable Notifications</label>
     </div>
-    <button onclick="enableNotifications()" style="width: 100%; margin-top: 10px; background: #28a745;">Enable Browser Notifications</button>
-  </div>
+  </section>
 
-  <form id="reminderForm">
+  <!-- Reminder Form -->
+  <section class="reminder-form">
     <h2>Add Reminder</h2>
-    
-    <label for="task">Reminder Title</label>
-    <input type="text" id="task" placeholder="e.g., Math assignment, History essay, Science project" required>
+    <form id="reminderForm">
+      <input type="text" id="task" placeholder="Reminder title..." required>
+      <select id="category" required>
+        <option value="">Category...</option>
+        <option value="assignment">Assignment</option>
+        <option value="exam">Exam</option>
+        <option value="project">Project</option>
+        <option value="personal">Personal</option>
+      </select>
+      <input type="date" id="due" required>
+      <input type="time" id="due_time" value="09:00">
+      <select id="priority">
+        <option value="low">Low</option>
+        <option value="medium" selected>Medium</option>
+        <option value="high">High</option>
+      </select>
+      <button type="submit">Add</button>
+    </form>
+  </section>
 
-    <label for="category">Category</label>
-    <select id="category" required>
-      <option value="">Select category...</option>
-      <option value="assignment">Assignment</option>
-      <option value="exam">Exam</option>
-      <option value="project">Project</option>
-      <option value="homework">Homework</option>
-      <option value="study">Study</option>
-      <option value="personal">Personal</option>
-      <option value="health">Health</option>
-      <option value="shopping">Shopping</option>
-      <option value="other">Other</option>
-    </select>
-
-    <label for="due">Due Date</label>
-    <input type="date" id="due" required>
-
-    <label for="due_time">Time</label>
-    <input type="time" id="due_time" value="09:00">
-
-    <label for="priority">Priority</label>
-    <select id="priority">
-      <option value="low">Low</option>
-      <option value="medium" selected>Medium</option>
-      <option value="high">High</option>
-    </select>
-
-    <button type="submit">Add Reminder</button>
-  </form>
-
-  <div id="dashboard">
-    <h2>My Reminder Dashboard</h2>
-    
-    <!-- Tabs -->
+  <!-- Dashboard -->
+  <section class="dashboard">
+    <h2>My Reminders</h2>
     <div class="tabs">
-      <button class="tab active" data-tab="current">REMINDER</button>
-      <button class="tab" data-tab="history">HISTORY</button>
-      <button class="tab" data-tab="notes">NOTES</button>
-      <button class="tab" data-tab="stats">STATISTICS</button>
+      <button class="tab active" data-tab="current">Reminders</button>
+      <button class="tab" data-tab="history">History</button>
+      <button class="tab" data-tab="notes">Notes</button>
+      <button class="tab" data-tab="stats">Statistics</button>
     </div>
-    
-    <!-- Current Reminders Tab -->
+
+    <!-- Current Reminders -->
     <div id="current" class="tab-content active">
       <table>
         <thead>
           <tr>
-            <th>📋 Title</th>
-            <th>Category</th>
-            <th>Due Date</th>
-            <th>Time</th>
-            <th>Priority</th>
-            <th>📊 Status</th>
-            <th>⚙️ Actions</th>
+            <th>Title</th><th>Category</th><th>Due</th>
+            <th>Time</th><th>Priority</th><th>Status</th><th>Actions</th>
           </tr>
         </thead>
         <tbody id="reminderList"></tbody>
       </table>
     </div>
-    
-    <!-- History Tab -->
+
+    <!-- History -->
     <div id="history" class="tab-content">
       <div id="historyList"></div>
     </div>
-    
-    <!-- Notes Tab -->
+
+    <!-- Notes -->
     <div id="notes" class="tab-content">
-      <div class="add-section">
-        <h3>Add Note</h3>
-        <div class="input-group">
-          <textarea id="noteContent" placeholder="Enter your note here..." rows="3"></textarea>
-          <button onclick="addNote()">Add Note</button>
-        </div>
-      </div>
+      <textarea id="noteContent" placeholder="Write a note..."></textarea>
+      <button onclick="addNote()">Add Note</button>
       <div id="notesList"></div>
     </div>
-    
-    <!-- Statistics Tab -->
+
+    <!-- Statistics -->
     <div id="stats" class="tab-content">
       <div class="stats-container">
-        <div class="stat-card">
-          <h3> Total Reminders</h3>
-          <div class="stat-number" id="totalReminders">0</div>
-        </div>
-        <div class="stat-card">
-          <h3> Upcoming</h3>
-          <div class="stat-number" id="upcomingCount">0</div>
-        </div>
-        <div class="stat-card">
-          <h3>Completed</h3>
-          <div class="stat-number" id="completedCount">0</div>
-        </div>
-        <div class="stat-card">
-          <h3>Notes</h3>
-          <div class="stat-number" id="notesCount">0</div>
-        </div>
+        <div class="stat-card"><h3>Total</h3><div id="totalReminders">0</div></div>
+        <div class="stat-card"><h3>Upcoming</h3><div id="upcomingCount">0</div></div>
+        <div class="stat-card"><h3>Completed</h3><div id="completedCount">0</div></div>
+        <div class="stat-card"><h3>Notes</h3><div id="notesCount">0</div></div>
       </div>
       <div class="chart-container">
-        <h3>📈 Reminder Trends</h3>
-        <div id="trendChart" class="trend-chart"></div>
+        <h3>Reminder Trends</h3>
+        <canvas id="trendChart"></canvas>
       </div>
     </div>
-  </div>
+  </section>
 
-<script>
-var reminderList = document.getElementById("reminderList");
-var historyList = document.getElementById("historyList");
-var notesList = document.getElementById("notesList");
-var API_URL = "http://localhost:5000";
+</main>
 
-// Simple theme management
-var themes = {
-  default: '#e0f7fa',
-  dark: '#2c3e50',
-  green: '#e8f5e8',
-  purple: '#f3e5f5'
-};
-
-// Apply theme
-function applyTheme(themeName) {
-  document.body.style.backgroundColor = themes[themeName];
-  localStorage.setItem('selectedTheme', themeName);//remember what color user select
-}
-
-// Load saved theme
-var savedTheme = localStorage.getItem('selectedTheme') || 'default';
-applyTheme(savedTheme);
-
-// Theme controls
-var colorOptions = document.querySelectorAll('.color-option');
-for (var i = 0; i < colorOptions.length; i++) {
-  colorOptions[i].addEventListener('click', function() {
-    var theme = this.dataset.theme;
-    applyTheme(theme);
-  });
-}
-
-// Notification permission and management
-var notificationEnabled = localStorage.getItem('notificationEnabled') === 'true';
-document.getElementById('notificationToggle').checked = notificationEnabled;
-
-document.getElementById('notificationToggle').addEventListener('change', function(e) {
-  notificationEnabled = e.target.checked;
-  localStorage.setItem('notificationEnabled', notificationEnabled);
-  
-  if (notificationEnabled) {
-    // Request notification permission
-    if (Notification.permission === 'default') {
-      Notification.requestPermission().then(function(permission) {
-        if (permission === 'granted') {
-          alert('Notification permissions have been granted! You will now receive notifications.');
-        } else {
-          alert('Notification permissions have been denied. You will still see pop-up alerts, but no system notifications will be displayed.');
-        }
-      });
-    } else if (Notification.permission === 'denied') {
-      alert('Notification permissions have been denied. You will still see pop-up alerts, but no system notifications will be displayed.');
-    }
-  }
-});
-
-// Tab management
-var tabs = document.querySelectorAll('.tab');
-for (var i = 0; i < tabs.length; i++) {
-  tabs[i].addEventListener('click', function() {
-    // Remove active class from all tabs and contents
-    var allTabs = document.querySelectorAll('.tab');
-    for (var j = 0; j < allTabs.length; j++) {
-      allTabs[j].classList.remove('active');
-    }
-    var allContents = document.querySelectorAll('.tab-content');
-    for (var k = 0; k < allContents.length; k++) {
-      allContents[k].classList.remove('active');
-    }
-    
-    // Add active class to clicked tab and corresponding content
-    this.classList.add('active');
-    var tabId = this.dataset.tab;
-    document.getElementById(tabId).classList.add('active');
-    
-    // Load content based on tab
-    if (tabId === 'history') {
-      showHistory();
-    } else if (tabId === 'notes') {
-      showNotes();
-    } else if (tabId === 'stats') {
-      showStatistics();
-    }
-  });
-}
-
-// Helper functions for display
-function getCategoryDisplay(category) {
-  var categories = {
-    'assignment': 'Assignment',
-    'exam': 'Exam',
-    'project': 'Project',
-    'homework': 'Homework',
-    'study': 'Study',
-    'personal': 'Personal', 
-    'health': 'Health',
-    'shopping': 'Shopping',
-    'other': 'Other'
-  };
-  return categories[category] || 'Other';
-}
-
-function getPriorityDisplay(priority) {
-  var priorities = {
-    'low': 'Low',
-    'medium': 'Medium',
-    'high': 'High'
-  };
-  return priorities[priority] || 'Medium';
-}
-
-// Enable browser notifications directly
-function enableNotifications() {
-  // Check if browser supports notifications
-  if (!('Notification' in window)) {
-    alert('Your browser does not support notifications!\nPlease use modern browsers like Chrome, Firefox, Edge, etc.');
-    return;
-  }
-
-  // Check current permission status
-  if (Notification.permission === 'granted') {
-    alert('Notification permissions are already enabled!\nYou will receive reminder notifications.');
-    document.getElementById('notificationToggle').checked = true;
-    localStorage.setItem('notificationEnabled', 'true');
-    notificationEnabled = true;
-    return;
-  }
-
-  if (Notification.permission === 'denied') {
-    alert('Notification permissions are denied!\n\nPlease follow these steps to enable:\n1. Click the lock icon on the left side of the address bar\n2. Set "Notifications" to "Allow"\n3. Refresh the page and try again');
-    return;
-  }
-
-  // Request permission
-  Notification.requestPermission().then(function(permission) {
-    if (permission === 'granted') {
-      alert('Notification permissions enabled!\n\nYou will receive the following notifications:\n• Urgent reminders (due within 1 hour)\n• Task due reminders\n• System sound alerts');
-      
-      // Enable notifications in app
-      document.getElementById('notificationToggle').checked = true;
-      localStorage.setItem('notificationEnabled', 'true');
-      notificationEnabled = true;
-      
-      // Send a test notification
-      new Notification('Notifications Enabled!', {
-        body: 'You will receive reminder notifications',
-        icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%2328a745"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>'
-      });
-      
-    } else {
-      alert('Notification permissions denied!\n\nYou can still use the app, but you will not receive notification reminders.\nTo enable, please refresh the page and try again.');
-    }
-  }).catch(function(error) {
-    console.error('Notification permission request failed:', error);
-    alert('Notification permission request failed!\nPlease check browser settings or refresh the page and try again.');
-  });
-}
-
-// Show reminder list with status
-function showReminders() {
-  // Show loading status first
-  reminderList.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #666;">Loading reminders...</td></tr>';
-  
-  fetch(API_URL + '/reminders')
-    .then(function(response) {
-      return response.json();
-    })
-    .then(function(reminders) {
-      reminderList.innerHTML = "";
-      
-      if (reminders.length === 0) {
-        reminderList.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #666;">No reminders yet</td></tr>';
-        return;
-      }
-      
-      for (var i = 0; i < reminders.length; i++) {
-        var r = reminders[i];
-        // Skip completed reminders (check if completed field exists and is true)
-        if (r.completed === true) continue;
-        
-        var dueTime = r.due_time || "00:00";
-        var dueDateTime = new Date(r.due + 'T' + dueTime);
-        var now = new Date();
-        var timeDiff = dueDateTime - now;
-        var hoursLeft = timeDiff / (1000 * 60 * 60);
-        
-        var statusClass = '';
-        var statusText = '';
-        
-        if (timeDiff < 0) {
-          statusClass = 'urgent';
-          statusText = 'Overdue';
-        } else {
-          // calcute
-          var totalMinutes = Math.floor(timeDiff / (1000 * 60));
-          var hours = Math.floor(totalMinutes / 60);
-          var minutes = totalMinutes % 60;
-          
-          if (hoursLeft <= 1) {
-            statusClass = 'urgent';
-            if (hours > 0) {
-              statusText = hours + 'hour' + minutes + 'min';
-            } else {
-              statusText = minutes + 'min';
-            }
-          } else if (hoursLeft <= 24) {
-            statusClass = 'due-soon';
-            if (hours > 0) {
-              statusText = 'due in' + hours + 'hour' + minutes + 'min';
-            } else {
-              statusText = 'due in' + minutes + 'min';
-            }
-          } else {
-            var daysLeft = Math.floor(hoursLeft / 24);
-            var remainingHours = Math.floor(hoursLeft % 24);
-            if (remainingHours > 0) {
-              statusText = 'due in' + daysLeft + 'day' + remainingHours + 'hour';
-            } else {
-              statusText = 'due in' + daysLeft + 'day';
-            }
-          }
-        }
-        
-        // Get category display name and emoji
-        var categoryDisplay = getCategoryDisplay(r.category);
-        var priorityDisplay = getPriorityDisplay(r.priority);
-        
-        reminderList.innerHTML += 
-          '<tr class="' + statusClass + '">' +
-            '<td><strong>' + r.task + '</strong></td>' +
-            '<td>' + categoryDisplay + '</td>' +
-            '<td>' + r.due + '</td>' +
-            '<td>' + dueTime + '</td>' +
-            '<td>' + priorityDisplay + '</td>' +
-            '<td>' + statusText + '</td>' +
-            '<td>' +
-              '<button class="complete-btn" onclick="completeReminder(' + i + ')">✓ Complete</button>' +
-              '<button class="delete-btn" onclick="deleteReminder(' + i + ')">🗑️ Delete</button>' +
-            '</td>' +
-          '</tr>';
-      }
-      
-      // Check for notifications
-      if (notificationEnabled) {
-        checkNotifications();
-      }
-    })
-    .catch(function(err) {
-      console.error("Cannot get the reminder list:", err);
-      // show error situation
-      reminderList.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #666;">Failed to load reminders. Please refresh the page.</td></tr>';
-    });
-}
-
-// Show notes
-function showNotes() {
-  // loading 
-  notesList.innerHTML = '<p style="text-align: center; color: #666;">is openning notes</p>';
-  
-  fetch(API_URL + '/notes')
-    .then(function(response) {
-      return response.json();
-    })
-    .then(function(notes) {
-      notesList.innerHTML = "";
-      
-      if (notes.length === 0) {
-        notesList.innerHTML = '<p style="text-align: center; color: #666;">no note</p>';
-        return;
-      }
-      
-      for (var i = notes.length - 1; i >= 0; i--) {
-        var note = notes[i];
-        var time = new Date(note.created_at).toLocaleString('zh-CN');
-        notesList.innerHTML += 
-          '<div class="note-item">' +
-            '<div class="item-content">' +
-              '<div>' + note.content + '</div>' +
-              '<div class="history-time">' + time + '</div>' +
-            '</div>' +
-            '<div class="item-actions">' +
-              '<button class="delete-btn" onclick="deleteNote(' + i + ')">delete</button>' +
-            '</div>' +
-          '</div>';
-      }
-    })
-    .catch(function(err) {
-      console.error("Cannot get notes：", err);
-      // show error message
-      notesList.innerHTML = '<p style="text-align: center; color: #666;">No Memo</p>';
-    });
-}
-
-// Show history
-function showHistory() {
-  // show loading
-  historyList.innerHTML = '<p style="text-align: center; color: #666;">Loading history  record</p>';
-  
-  fetch(API_URL + '/history')
-    .then(function(response) {
-      return response.json();
-    })
-    .then(function(history) {
-      historyList.innerHTML = "";
-      
-      if (history.length === 0) {
-        historyList.innerHTML = '<p style="text-align: center; color: #666;">Not history  record</p>';
-        return;
-      }
-      
-      for (var i = history.length - 1; i >= 0; i--) {
-        var entry = history[i];
-        var time = new Date(entry.timestamp).toLocaleString('zh-CN');
-        var actionText = entry.action === 'created' ? 'created' : 
-                        entry.action === 'completed' ? 'completed' : 
-                        entry.action === 'deleted' ? 'delete' : entry.action;
-        
-        var deletedClass = entry.action === 'deleted' ? 'deleted' : '';
-        historyList.innerHTML += 
-          '<div class="history-item ' + deletedClass + '">' +
-            '<div class="item-content">' +
-              '<div><strong>' + actionText + '</strong> - ' + entry.reminder.task + '</div>' +
-              '<div style="font-size: 14px; color: #666;">Subject: ' + entry.reminder.subject + ' | Deadline: ' + entry.reminder.due + ' ' + (entry.reminder.due_time || '00:00') + '</div>' +
-              '<div class="history-time">' + time + '</div>' +
-            '</div>' +
-          '</div>';
-      }
-    })
-    .catch(function(err) {
-      console.error("Cannot get history：", err);
-      // Show friendly error message instead of "loading failed"
-      historyList.innerHTML = '<p style="text-align: center; color: #666;">no history</p>';
-    });
-}
-
-// Show statistics
-function showStatistics() {
-  // Load all data for statistics
-  Promise.all([
-    fetch(API_URL + '/reminders').then(r => r.json()),
-    fetch(API_URL + '/upcoming').then(r => r.json()),
-    fetch(API_URL + '/notes').then(r => r.json()),
-    fetch(API_URL + '/history').then(r => r.json())
-  ]).then(function([reminders, upcoming, notes, history]) {
-    // Update stat numbers
-    document.getElementById('totalReminders').textContent = reminders.length;
-    document.getElementById('upcomingCount').textContent = upcoming.length;
-    
-    // Count completed reminders from history
-    var completedCount = history.filter(function(entry) {
-      return entry.action === 'completed';
-    }).length;
-    document.getElementById('completedCount').textContent = completedCount;
-    
-    document.getElementById('notesCount').textContent = notes.length;
-    
-    // Create trend chart
-    createTrendChart(history);
-  }).catch(function(err) {
-    console.error("Cannot load statistics:", err);
-  });
-}
-
-// Create trend chart
-function createTrendChart(history) {
-  var chartContainer = document.getElementById('trendChart');
-  
-  // Group history by date
-  var dailyStats = {};
-  history.forEach(function(entry) {
-    var date = new Date(entry.timestamp).toDateString();
-    if (!dailyStats[date]) {
-      dailyStats[date] = { created: 0, completed: 0, deleted: 0 };
-    }
-    dailyStats[date][entry.action]++;
-  });
-  
-  // Create simple chart
-  var chartHTML = '<div class="chart-bars">';
-  var dates = Object.keys(dailyStats).slice(-7); // Last 7 days
-  
-  dates.forEach(function(date) {
-    var stats = dailyStats[date];
-    var max = Math.max(stats.created, stats.completed, stats.deleted);
-    var height = max > 0 ? (max * 100 / Math.max(10, max)) : 0;
-    
-    chartHTML += 
-      '<div class="chart-bar">' +
-        '<div class="bar" style="height: ' + height + 'px;"></div>' +
-        '<div class="bar-label">' + new Date(date).toLocaleDateString('zh-CN', {month: 'short', day: 'numeric'}) + '</div>' +
-        '<div class="bar-stats">' +
-          '<span class="created">+' + stats.created + '</span>' +
-          '<span class="completed">✓' + stats.completed + '</span>' +
-          '<span class="deleted">×' + stats.deleted + '</span>' +
-        '</div>' +
-      '</div>';
-  });
-  
-  chartHTML += '</div>';
-  chartContainer.innerHTML = chartHTML;
-}
-
-// Popup alert function
-function showPopupAlert(title, message, callback) {
-  var overlay = document.createElement('div');
-  overlay.className = 'popup-overlay';
-  
-  var popup = document.createElement('div');
-  popup.className = 'popup-alert';
-  popup.innerHTML = 
-    '<h3>' + title + '</h3>' +
-    '<p>' + message + '</p>' +
-    '<button onclick="closePopup()">OK</button>' +
-    '<button class="secondary" onclick="closePopup()">Cancel</button>';
-  
-  overlay.appendChild(popup);
-  document.body.appendChild(overlay);
-  
-  // Create closePopup function
-  window.closePopup = function() {
-    try {
-      if (document.body.contains(overlay)) {
-        document.body.removeChild(overlay);
-      }
-      if (callback) callback();
-    } catch (err) {
-      console.error("Error closing popup:", err);
-    }
-  };
-  
-  // Close popup when clicking overlay
-  overlay.addEventListener('click', function(e) {
-    if (e.target === overlay) {
-      window.closePopup();
-    }
-  });
-}
-
-// Check notifications with popup alerts
-function checkNotifications() {
-  if (!notificationEnabled) {
-    return;
-  }
-  
-  fetch(API_URL + '/upcoming')
-    .then(function(response) {
-      return response.json();
-    })
-    .then(function(upcoming) {
-      for (var i = 0; i < upcoming.length; i++) {
-        var reminder = upcoming[i];
-        if (reminder.urgent) {
-          // Play notification sound
-          playNotificationSound();
-          
-          // Only show browser notification, no popup alerts
-          if (Notification.permission === 'granted') {
-            new Notification('Urgent Reminder: ' + reminder.task, {
-              body: 'Subject: ' + reminder.category + ' - Due within 1 hour!',
-              icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="red"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>',
-              tag: 'urgent-' + reminder.id,
-              requireInteraction: true
-            });
-          }
-        } else if (reminder.days_left <= 1) {
-          // Play notification sound for upcoming reminders
-          playNotificationSound();
-          
-          // Show browser notification for reminders due within 24 hours
-          if (Notification.permission === 'granted') {
-            new Notification('Reminder: ' + reminder.task, {
-              body: 'Subject: ' + reminder.category + ' - ' + reminder.days_left + ' days left',
-              icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="orange"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>',
-              tag: 'reminder-' + reminder.id
-            });
-          }
-        }
-      }
-    })
-    .catch(function(err) {
-      console.error("Notification check failed：", err);
-    });
-}
-
-
-// Play system notification sound
-function playNotificationSound() {
-  try {
-    // Create audio context
-    var audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    
-    // Create oscillator
-    var oscillator = audioContext.createOscillator();
-    var gainNode = audioContext.createGain();
-    
-    // Connect nodes
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    // Set frequency and volume
-    oscillator.frequency.setValueAtTime(800, audioContext.currentTime); // 800Hz
-    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-    
-    // Play sound
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.2); // Play for 0.2 seconds
-    
-    // Play second tone
-    setTimeout(function() {
-      var oscillator2 = audioContext.createOscillator();
-      var gainNode2 = audioContext.createGain();
-      
-      oscillator2.connect(gainNode2);
-      gainNode2.connect(audioContext.destination);
-      
-      oscillator2.frequency.setValueAtTime(1000, audioContext.currentTime); // 1000Hz
-      gainNode2.gain.setValueAtTime(0.3, audioContext.currentTime);
-      
-      oscillator2.start(audioContext.currentTime);
-      oscillator2.stop(audioContext.currentTime + 0.2);
-    }, 300);
-    
-  } catch (err) {
-    console.log("Cannot play notification sound:", err);
-    // Fallback: use simple beep sound
-    try {
-      var audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU6k9n1unEiBC13yO/eizEIHWq+8+OWT');
-      audio.play();
-    } catch (e) {
-      console.log("Fallback notification sound also cannot play");
-    }
-  }
-}
-
-// Add note function
-function addNote() {
-  var content = document.getElementById('noteContent').value.trim();
-  if (!content) {
-    alert('Please enter note content');
-    return;
-  }
-  
-  fetch(API_URL + '/notes', {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ content: content })
-  })
-  .then(function(response) {
-    return response.json();
-  })
-  .then(function(result) {
-    console.log("Note added:", result);
-    document.getElementById('noteContent').value = '';
-    showNotes();
-  })
-  .catch(function(err) {
-    console.error("Add note failed:", err);
-    alert("Add note failed");
-  });
-}
-
-// Delete note function
-function deleteNote(index) {
-  fetch(API_URL + '/notes/' + index, {
-    method: "DELETE"
-  })
-  .then(function(response) {
-    return response.json();
-  })
-  .then(function(result) {
-    console.log("Note deleted:", result);
-    showNotes();
-  })
-  .catch(function(err) {
-    console.error("Delete note failed:", err);
-    alert("Delete note failed");
-  });
-}
-
-
-// Complete reminder function
-function completeReminder(index) {
-  fetch(API_URL + '/reminders/' + index + '/complete', {
-    method: "PUT"
-  })
-  .then(function(response) {
-    return response.json();
-  })
-  .then(function(result) {
-    console.log("Reminder completed:", result);
-    
-    // Disable notifications after completing task
-    notificationEnabled = false;
-    document.getElementById('notificationToggle').checked = false;
-    localStorage.setItem('notificationEnabled', 'false');
-    
-    showReminders();
-  })
-  .catch(function(err) {
-    console.error("Complete reminder failed:", err);
-    alert("Complete reminder failed");
-  });
-}
-
-// add reminder
-document.getElementById("reminderForm").addEventListener("submit", function(e) {
-  e.preventDefault();
-  var task = document.getElementById("task").value.trim();
-  var category = document.getElementById("category").value;
-  var due = document.getElementById("due").value;
-  var due_time = document.getElementById("due_time").value;
-  var priority = document.getElementById("priority").value;
-
-  if (!task || !category || !due) {
-    alert("Please fill in all required fields");
-    return;
-  }
-
-  fetch(API_URL + '/reminders', {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ 
-      task: task, 
-      category: category, 
-      due: due, 
-      due_time: due_time,
-      priority: priority 
-    })
-  })
-  .then(function(response) {
-    return response.json();
-  })
-  .then(function(result) {
-    console.log("Reminder added successfully:", result);
-    showReminders();
-    document.getElementById("reminderForm").reset();
-    document.getElementById("due_time").value = "09:00"; // Reset to default time
-    document.getElementById("priority").value = "medium"; // Reset to default priority
-  })
-  .catch(function(err) {
-    console.error("Failed to add reminder:", err);
-    alert("Failed to add reminder. Please check if server is running.");
-  });
-});
-
-// delete reminder
-function deleteReminder(index) {
-  fetch(API_URL + '/reminders/' + index, {
-    method: "DELETE"
-  })
-  .then(function(response) {
-    return response.json();
-  })
-  .then(function(result) {
-    console.log("delete successfully：", result);
-    showReminders();
-  })
-  .catch(function(err) {
-    console.error("delete failed：", err);
-    alert("Delete reminder failed");
-  });
-}
-
-// Initialize
-showReminders();
-
-// Check notifications every 1 minute
-setInterval(() => {
-  if (notificationEnabled) {
-    checkNotifications();
-  }
-}, 60 * 1000);
-</script>
-</body>
-</html>
+<!-- Scripts -->
+<link rel="stylesheet" href="{{ url_for('static', filename='reminder.css') }}">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='reminder.js') }}"></script>
+{% endblock %}
