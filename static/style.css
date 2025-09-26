@@ -1505,139 +1505,398 @@ body[data-theme="dark"] {
         background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
     }
 }
-/* ---------------- JOURNAL TAB ---------------- */
-.journal-container {
-  max-width: 800px;
-  margin: 2rem auto;
-  padding: 2rem;
-  border-radius: 1.25rem;
-  background: var(--container-bg);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-  transition: background 0.3s ease;
+
+/* Reminder Dashboard Styles */
+.reminder-container {
+  display: grid;
+  gap: 2rem;
+  padding: 1rem;
 }
 
-[data-theme="dark"] .journal-container {
-  background: #2a2a2a;
-  color: #f5f5f5; /* force clear text in dark mode */
+/* Controls */
+.controls {
+  background: #000000;
+  padding: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(255, 255, 255, 0.1);
+  color: #ffffff;
 }
 
-/* Headings */
-.journal-container h2 {
-  font-size: 1.8rem;
-  font-weight: 700;
-  margin-bottom: 1.5rem;
-  text-align: center;
-  color: var(--text-color);
+.controls h2 {
+  color: #ffffff;
 }
 
-/* Labels */
-.journal-container label {
-  font-weight: 600;
-  margin-bottom: 0.3rem;
-  display: block;
-  color: var(--text-color);
+.notification-toggle {
+  color: #ffffff;
 }
 
-/* Inputs & textarea */
-.journal-container input,
-.journal-container textarea {
-  width: 100%;
-  padding: 0.8rem 1rem;
-  border-radius: 0.75rem;
-  border: 1px solid #ccc;
-  margin-bottom: 1rem;
-  font-size: 1rem;
-  transition: border-color 0.3s;
+.notification-toggle label {
+  color: #ffffff;
 }
 
-.journal-container input:focus,
-.journal-container textarea:focus {
-  outline: none;
-  border-color: #ff8c66;
-  box-shadow: 0 0 0 2px rgba(255, 140, 102, 0.3);
+.notification-toggle input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin-right: 8px;
+  accent-color: #ff8c66;
 }
 
-[data-theme="dark"] .journal-container input,
-[data-theme="dark"] .journal-container textarea {
-  background: #3a3a3a;
-  border-color: #666;
-  color: #fff; /* make text visible */
+.notification-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
 }
 
-/* Buttons */
-.journal-container button {
-  padding: 0.8rem 1.5rem;
-  border: none;
-  border-radius: 0.75rem;
-  background: #ff8c66;
-  color: #fff;
-  font-size: 1rem;
-  font-weight: 600;
+.notification-toggle label {
   cursor: pointer;
-  transition: background 0.3s ease;
+  user-select: none;
+}
+.color-picker {
+  display: flex;
+  gap: .5rem;
 }
 
-.journal-container button:hover {
-  background: #ff7043;
+/* Form */
+.reminder-form form {
+  display: grid;
+  gap: .75rem;
+}
+.reminder-form input,
+.reminder-form select,
+.reminder-form textarea {
+  padding: .5rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  width: 100%;
+}
+.reminder-form button {
+  background: var(--btn-bg, #b3b3b3);
+  color: rgb(255, 255, 255);
+  border: none;
+  padding: .5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
 }
 
-/* Past entries table */
-.journal-container table {
+/* Dashboard */
+.dashboard {
+  background: #000000;
+  padding: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.dashboard h2 {
+  color: #ffffff;
+}
+.tabs {
+  display: flex;
+  gap: .5rem;
+  margin-bottom: 1rem;
+}
+.tab {
+  padding: .5rem 1rem;
+  border: none;
+  background: #333333;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #ffffff;
+}
+.tab.active {
+  background: #ff8c66;
+  color: #ffffff;
+}
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* Table */
+table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 2rem;
-  border-radius: 0.75rem;
-  overflow: hidden;
+  background: #1a1a1a;
 }
-
-.journal-container th,
-.journal-container td {
-  padding: 0.9rem;
+th, td {
+  padding: .5rem;
+  border-bottom: 1px solid #555;
   text-align: left;
-  font-size: 0.95rem;
+  color: #ffffff;
+}
+th {
+  background: #333333;
+  color: #ffffff;
 }
 
-.journal-container th {
-  background: #ffe0d6;
-  font-weight: 700;
+/* Stats */
+.stats-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px,1fr));
+  gap: 1rem;
+}
+.stat-card {
+  background: #333333;
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: center;
+  color: #ffffff;
+}
+.chart-container {
+  margin-top: 1.5rem;
+}
+.reminder-container {
+  max-width: 1000px;
+  margin: 2rem auto;
+  padding: 20px;
+  background: #ffffff;  /* fixed design */
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  color: #333;
 }
 
-[data-theme="dark"] .journal-container th {
-  background: #444;
+.controls {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.tab {
+  padding: 10px 20px;
+  border: none;
+  background: #ad6f6f;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.tab.active {
+  background: #a63838;
+  color: #b56c6c;
+}
+
+.tab-content {
+  display: none;
+  margin-top: 1rem;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+.reminder-form input,
+.reminder-form select,
+.reminder-form button,
+textarea {
+  padding: 10px;
+  margin: 5px 0;
+  width: 100%;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+.reminder-form button {
+  background: #ffffff;
   color: #fff;
+  border: none;
+  cursor: pointer;
 }
 
-.journal-container tr:nth-child(even) {
-  background: #fff7f5;
+.reminder-form button:hover {
+  background: #ffffff;
 }
 
-[data-theme="dark"] .journal-container tr:nth-child(even) {
+.dashboard canvas {
+  margin-top: 20px;
+}
+
+/* ================== Reminder Specific Styles ================== */
+
+/* Badge styles */
+.category-badge, .priority-badge, .status-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8em;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.category-badge {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.priority-badge {
+  color: white;
+}
+
+.priority-badge.priority-low {
+  background: #4caf50;
+}
+
+.priority-badge.priority-medium {
+  background: #ff9800;
+}
+
+.priority-badge.priority-high {
+  background: #f44336;
+}
+
+.status-badge.completed {
+  background: #4caf50;
+  color: white;
+}
+
+.status-badge.pending {
+  background: #ff9800;
+  color: white;
+}
+
+/* Button styles */
+.btn-complete, .btn-delete, .btn-delete-note {
+  padding: 6px 12px;
+  margin: 2px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8em;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.btn-complete {
+  background: #4caf50;
+  color: white;
+}
+
+.btn-complete:hover:not(:disabled) {
+  background: #45a049;
+}
+
+.btn-complete:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.btn-delete, .btn-delete-note {
+  background: #f44336;
+  color: white;
+}
+
+.btn-delete:hover, .btn-delete-note:hover {
+  background: #da190b;
+}
+
+/* Note styles */
+.note-item {
   background: #333;
-}
-/* Fix for grey text in dark mode */
-[data-theme="dark"] .journal-form label,
-[data-theme="dark"] .journal-form h2,
-[data-theme="dark"] .journal-form h3,
-[data-theme="dark"] .journal-table th,
-[data-theme="dark"] .journal-table td {
-  color: #ffffff !important;  /* Force clear white text */
-}
-/* Darker pink border for Mood & Energy inputs */
-.journal-container #mood,
-.journal-container #energy {
-  border: 3px solid #e04a3f; /* darker and more visible pink */
-  border-radius: 0.75rem;
-  transition: border-color 0.3s, box-shadow 0.3s;
-  background: #fff; /* optional, makes the input pop more */
+  padding: 1rem;
+  margin: 0.5rem 0;
+  border-radius: 8px;
+  border-left: 4px solid #ff8c66;
 }
 
-.journal-container #mood:focus,
-.journal-container #energy:focus {
-  border-color: #ff7043; /* keep the focus effect as before */
-  box-shadow: 0 0 0 3px rgba(255, 112, 67, 0.3);
+.note-content {
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
 }
-.journal-container #mood,
-.journal-container #energy {
-  background: #ffe5e0; /* light pink input background */
+
+.note-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8em;
+  color: #ccc;
+}
+
+/* History styles */
+.history-item {
+  background: #333;
+  padding: 1rem;
+  margin: 0.5rem 0;
+  border-radius: 8px;
+  border-left: 4px solid #2196f3;
+}
+
+.history-item.completed-reminder {
+  border-left-color: #4caf50;
+}
+
+.history-action {
+  font-weight: 600;
+  color: #ff8c66;
+  text-transform: capitalize;
+}
+
+.history-item.completed-reminder .history-action {
+  color: #4caf50;
+}
+
+.history-task {
+  color: #ffffff;
+  margin: 0.25rem 0;
+  font-weight: 500;
+}
+
+.history-details {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.history-details .due-date {
+  color: #ccc;
+  font-size: 0.8em;
+  font-style: italic;
+}
+
+.history-time {
+  font-size: 0.8em;
+  color: #ccc;
+}
+
+/* Table row styles */
+tr.completed {
+  opacity: 0.6;
+}
+
+tr.completed td {
+  text-decoration: line-through;
+}
+
+/* Chart container */
+.chart-container {
+  background: #333;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-top: 1rem;
+}
+
+.chart-container h3 {
+  color: #ffffff;
+  margin-bottom: 1rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .note-meta, .history-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .btn-complete, .btn-delete, .btn-delete-note {
+    padding: 4px 8px;
+    font-size: 0.7em;
+  }
+  
+  table {
+    font-size: 0.8em;
+  }
+  
+  th, td {
+    padding: 0.25rem;
+  }
 }
 
