@@ -741,25 +741,23 @@ def journal():
     )
 
 
-# 🗑️ Delete Journal Entry
 @app.route('/delete_journal/<int:id>', methods=['POST'])
 def delete_journal(id):
     with get_db_connection() as conn:
         conn.execute("DELETE FROM journal WHERE id = ?", (id,))
         conn.commit()
     flash("Journal entry deleted successfully!", "success")
-    return redirect(url_for('journal'))  # ✅ Correct redirect
+    return redirect(url_for('journal'))  # ✅ fixed
 
 
-# ✏️ Edit Journal Entry
 @app.route('/edit_journal/<int:id>', methods=['GET', 'POST'])
 def edit_journal(id):
     with get_db_connection() as conn:
-        journal_entry = conn.execute("SELECT * FROM journal WHERE id = ?", (id,)).fetchone()
+        journal = conn.execute("SELECT * FROM journal WHERE id = ?", (id,)).fetchone()
 
-    if not journal_entry:
+    if not journal:
         flash("Journal entry not found.", "danger")
-        return redirect(url_for('journal'))  # ✅ Correct redirect
+        return redirect(url_for('journal'))
 
     if request.method == 'POST':
         new_date = request.form['entry_date']
@@ -778,7 +776,7 @@ def edit_journal(id):
         flash("Journal updated successfully!", "success")
         return redirect(url_for('journal'))
 
-    return render_template('edit_journal.html', journal=journal_entry)
+    return render_template('edit_journal.html', journal=journal)
 
 # ---------------------- REMINDER PAGE ----------------------
 @app.route("/reminder_page")
