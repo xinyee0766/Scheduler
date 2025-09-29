@@ -1,8 +1,9 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_from_directory, session
+from flask_cors import CORS
 import sqlite3
 import os
-from datetime import datetime, timedelta, date 
-from models import Todo, Class, init_db
+from datetime import datetime, timedelta, date
+from models import Todo, Class, init_db, UploadedFile, Journal
 from config import VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY
 from pywebpush import webpush, WebPushException
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -10,9 +11,16 @@ import json
 from werkzeug.utils import secure_filename
 import calendar as cal
 from pyfcm import FCMNotification
+
 from fcm_config import FCM_API_KEY
 
+# ---------------------- FCM SETUP ----------------------
 push_service = FCMNotification(FCM_API_KEY)
+
+# ---------------------- IN-MEMORY STORAGE ----------------------
+reminders = []
+reminder_history = []
+notes = []
 
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), "uploads")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -21,21 +29,47 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app = Flask(__name__)
 app.secret_key = "xinyee0766"
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///reminders.db"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+CORS(app)
+
+
+with app.app_context():
+    init_db()
 
 DB_NAME = os.path.join(os.path.dirname(__file__), 'classes.db')
 SUBSCRIPTIONS = []
 
+def load_data():
+    global reminders, reminder_history, notes
+    if os.path.exists('reminders.json'):
+        with open('reminders.json', 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            reminders = data.get('reminders', [])
+            reminder_history = data.get('history', [])
+            notes = data.get('notes', [])
+
+def save_data():
+    data = {
+        'reminders': reminders,
+        'history': reminder_history,
+        'notes': notes
+    }
+    with open('reminders.json', 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+load_data()
+
 def get_db_connection():
-    conn = sqlite3.connect(DB_NAME, timeout=10)
-    conn.row_factory = sqlite3.Row  
+    conn = sqlite3.connect(DB_NAME, timeout=10, detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
+    conn.row_factory = sqlite3.Row
     return conn
 
-
-# Initialize database
+# Initialize database models in external init_db (existing) and ensure our tables exist
 init_db()
 
-# Ensure subscriptions table exists
 with get_db_connection() as conn:
+    # subscriptions table (already in your file) left as-is
     conn.execute("""
         CREATE TABLE IF NOT EXISTS subscriptions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -44,6 +78,7 @@ with get_db_connection() as conn:
             auth TEXT
         )
     """)
+    # uploaded_files as before
     conn.execute("""
         CREATE TABLE IF NOT EXISTS uploaded_files (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -51,7 +86,147 @@ with get_db_connection() as conn:
             path TEXT
         )
     """)
+    # new: reminders table to persist reminders
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS reminders (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            task TEXT NOT NULL,
+            category TEXT,
+            due TEXT NOT NULL,        -- YYYY-MM-DD
+            due_time TEXT,            -- HH:MM
+            priority TEXT,
+            completed INTEGER DEFAULT 0,
+            created_at TEXT
+        )
+    """)
+    # new: device tokens for FCM
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS device_tokens (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            token TEXT UNIQUE NOT NULL
+        )
+    """)
     conn.commit()
+
+# ---------------------- SCHEDULER ----------------------
+scheduler = BackgroundScheduler(daemon=True)
+# We'll start it after defining the job function to avoid race conditions
+# (we'll call scheduler.start() at the end of setup)
+
+def send_scheduled_fcm(reminder_id):
+    """
+    Job function run by APScheduler at reminder due datetime.
+    Fetch reminder from DB, send FCM to saved device tokens, mark completed.
+    """
+    try:
+        with get_db_connection() as conn:
+            row = conn.execute("SELECT * FROM reminders WHERE id=?", (reminder_id,)).fetchone()
+            if not row:
+                print(f"[scheduler] Reminder id {reminder_id} not found in DB.")
+                return
+            if row["completed"]:
+                print(f"[scheduler] Reminder id {reminder_id} already completed.")
+                return
+
+            # Build message
+            task = row["task"]
+            due = row["due"]
+            due_time = row["due_time"] or ""
+            priority = row["priority"] or ""
+
+            # Fetch tokens from DB
+            tokens_rows = conn.execute("SELECT token FROM device_tokens").fetchall()
+            tokens = [r["token"] for r in tokens_rows]
+
+            # Send FCM if tokens exist
+            if tokens:
+                try:
+                    result = push_service.notify_multiple_devices(
+                        registration_ids=tokens,
+                        message_title="Reminder Due!",
+                        message_body=f"{task} is due now ({due} {due_time}) Priority: {priority}"
+                    )
+                    print("[scheduler] FCM sent:", result)
+                except Exception as e:
+                    print("[scheduler] FCM send error:", e)
+            else:
+                print("[scheduler] No device tokens to notify.")
+
+            # Mark reminder as completed in DB
+            conn.execute("UPDATE reminders SET completed=1 WHERE id=?", (reminder_id,))
+            conn.commit()
+
+            # Also update in-memory list if present
+            for r in reminders:
+                # match by DB id stored in r.get('db_id') or fallback to matching fields
+                if r.get('db_id') == reminder_id or (r.get('task') == task and r.get('due') == due and r.get('due_time') == due_time):
+                    r['completed'] = True
+                    # add history entry
+                    history_entry = {
+                        "action": "completed",
+                        "reminder": r.copy(),
+                        "timestamp": datetime.now().isoformat()
+                    }
+                    reminder_history.append(history_entry)
+                    save_data()
+                    break
+    except Exception as ex:
+        print("[scheduler] Exception in send_scheduled_fcm:", ex)
+
+def schedule_job_for_reminder_dbrow(row):
+    """
+    Given a DB row (sqlite3.Row) from reminders table, schedule a job if due datetime is in future and not completed.
+    """
+    try:
+        if row["completed"]:
+            return
+        due = row["due"]              # YYYY-MM-DD
+        due_time = row["due_time"] or "00:00"
+        dt_str = f"{due} {due_time}"
+        due_dt = datetime.strptime(dt_str, "%Y-%m-%d %H:%M")
+        if due_dt <= datetime.now():
+            # If due time already passed, do not schedule (optionally could run immediately)
+            return
+        job_id = f"reminder_{row['id']}"
+        # Use replace_existing to avoid duplicates
+        scheduler.add_job(func=lambda rid=row['id']: send_scheduled_fcm(rid),
+                          trigger="date",
+                          run_date=due_dt,
+                          id=job_id,
+                          replace_existing=True)
+        print(f"[scheduler] Scheduled reminder id={row['id']} at {due_dt.isoformat()}")
+    except Exception as e:
+        print("[scheduler] schedule_job_for_reminder_dbrow error:", e)
+
+# load reminders from DB and schedule pending ones
+def load_and_schedule_db_reminders():
+    try:
+        with get_db_connection() as conn:
+            rows = conn.execute("SELECT * FROM reminders WHERE completed=0").fetchall()
+            for r in rows:
+                # also keep in-memory list consistent: add if not present
+                already = False
+                for im in reminders:
+                    if im.get('db_id') == r['id']:
+                        already = True
+                        break
+                if not already:
+                    reminder_obj = {
+                        "task": r["task"],
+                        "category": r["category"],
+                        "due": r["due"],
+                        "due_time": r["due_time"],
+                        "priority": r["priority"],
+                        "completed": bool(r["completed"]),
+                        "created_at": r["created_at"],
+                        "id": len(reminders),
+                        "db_id": r["id"]
+                    }
+                    reminders.append(reminder_obj)
+                # schedule job
+                schedule_job_for_reminder_dbrow(r)
+    except Exception as ex:
+        print("[startup] load_and_schedule_db_reminders error:", ex)
 
 # ---------------------- DASHBOARD ----------------------
 @app.route("/dashboard")
@@ -254,84 +429,6 @@ def delete_todo(todo_id):
     flash("Task deleted successfully!", "success")
     return redirect(url_for("todos"))
 
-
-# ---------------------- JOURNAL ROUTES ----------------------
-with get_db_connection() as conn:
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS journal (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            entry_date TEXT NOT NULL,
-            mood INTEGER NOT NULL,
-            energy INTEGER NOT NULL,
-            notes TEXT
-        )
-    """)
-    conn.commit()
-
-# View/Add journal entries
-@app.route("/journal", methods=["GET", "POST"])
-def journal():
-    with get_db_connection() as conn:
-        if request.method == "POST":
-            entry_date = request.form["entry_date"]
-            mood = request.form["mood"]
-            energy = request.form["energy"]
-            notes = request.form.get("notes", "")
-
-            conn.execute(
-                "INSERT INTO journal (entry_date, mood, energy, notes) VALUES (?, ?, ?, ?)",
-                (entry_date, mood, energy, notes)
-            )
-            conn.commit()
-            flash("Journal entry saved!", "success")
-            return redirect(url_for("journal"))
-
-        # Include 'id' so edit/delete URLs work
-        entries = conn.execute(
-            "SELECT id, entry_date, mood, energy, notes FROM journal ORDER BY entry_date DESC"
-        ).fetchall()
-
-    return render_template(
-        "mood_journal.html",
-        entries=entries,
-        today=date.today().strftime("%Y-%m-%d"),
-    )
-
-# Edit a journal entry
-@app.route("/journal/edit/<int:entry_id>", methods=["GET", "POST"])
-def edit_journal(entry_id):
-    with get_db_connection() as conn:
-        entry = conn.execute("SELECT * FROM journal WHERE id=?", (entry_id,)).fetchone()
-        if not entry:
-            flash("Journal entry not found", "error")
-            return redirect(url_for("journal"))
-
-        if request.method == "POST":
-            entry_date = request.form["entry_date"]
-            mood = request.form["mood"]
-            energy = request.form["energy"]
-            notes = request.form.get("notes", "")
-
-            conn.execute("""
-                UPDATE journal
-                SET entry_date=?, mood=?, energy=?, notes=?
-                WHERE id=?
-            """, (entry_date, mood, energy, notes, entry_id))
-            conn.commit()
-            flash("Journal entry updated!", "success")
-            return redirect(url_for("journal"))
-
-    return render_template("edit_journal.html", entry=entry)
-
-# Delete a journal entry
-@app.route("/journal/delete/<int:entry_id>", methods=["POST"])
-def delete_journal(entry_id):
-    with get_db_connection() as conn:
-        conn.execute("DELETE FROM journal WHERE id=?", (entry_id,))
-        conn.commit()
-    flash("Journal entry deleted!", "success")
-    return redirect(url_for("journal"))
-
 # ---------------------- NOTIFICATION CHECK ----------------------
 @app.route("/todos/check")
 def check_due_tasks():
@@ -434,10 +531,14 @@ def check_and_notify():
                 }
                 send_push_notification(subscription_dict, "Task Reminder", task)
 
-scheduler = BackgroundScheduler(daemon=True)
+# Start the existing scheduler job for Todo check
 if not scheduler.get_jobs():
     scheduler.add_job(check_and_notify, trigger="interval", minutes=1)
+# Start the scheduler (will also be used for reminder jobs)
 scheduler.start()
+
+# After scheduler started, load DB reminders into memory and schedule
+load_and_schedule_db_reminders()
 
 # ---------------------- FILE UPLOADS ----------------------
 @app.route("/dashboard/upload", methods=["POST"])
@@ -597,5 +698,307 @@ def home():
                            completed_tasks=completed_tasks,
                            total_tasks=total_tasks)
 
+# ---------------------- JOURNAL ROUTES ----------------------
+with get_db_connection() as conn:
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS journal (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            entry_date TEXT NOT NULL,
+            mood INTEGER NOT NULL,
+            energy INTEGER NOT NULL,
+            notes TEXT
+        )
+    """)
+    conn.commit()
+
+
+@app.route("/journal", methods=["GET", "POST"])
+def journal():
+    with get_db_connection() as conn:
+        if request.method == "POST":
+            entry_date = request.form["entry_date"]
+            mood = request.form["mood"]
+            energy = request.form["energy"]
+            notes = request.form.get("notes", "")
+
+            conn.execute(
+                "INSERT INTO journal (entry_date, mood, energy, notes) VALUES (?, ?, ?, ?)",
+                (entry_date, mood, energy, notes),
+            )
+            conn.commit()
+            flash("Journal entry saved!")
+            return redirect(url_for("journal"))
+
+        # ✅ Include ID so the template can access entry['id']
+        entries = conn.execute(
+            "SELECT id, entry_date, mood, energy, notes FROM journal ORDER BY entry_date DESC"
+        ).fetchall()
+
+    return render_template(
+        "mood_journal.html",  # ✅ your filename here
+        entries=entries,
+        today=date.today().strftime("%Y-%m-%d"),
+    )
+
+
+# 🗑️ Delete Journal Entry
+@app.route('/delete_journal/<int:id>', methods=['POST'])
+def delete_journal(id):
+    with get_db_connection() as conn:
+        conn.execute("DELETE FROM journal WHERE id = ?", (id,))
+        conn.commit()
+    flash("Journal entry deleted successfully!", "success")
+    return redirect(url_for('journal'))  # ✅ Correct redirect
+
+
+# ✏️ Edit Journal Entry
+@app.route('/edit_journal/<int:id>', methods=['GET', 'POST'])
+def edit_journal(id):
+    with get_db_connection() as conn:
+        journal_entry = conn.execute("SELECT * FROM journal WHERE id = ?", (id,)).fetchone()
+
+    if not journal_entry:
+        flash("Journal entry not found.", "danger")
+        return redirect(url_for('journal'))  # ✅ Correct redirect
+
+    if request.method == 'POST':
+        new_date = request.form['entry_date']
+        new_mood = request.form['mood']
+        new_energy = request.form['energy']
+        new_notes = request.form['notes']
+
+        with get_db_connection() as conn:
+            conn.execute("""
+                UPDATE journal 
+                SET entry_date = ?, mood = ?, energy = ?, notes = ?
+                WHERE id = ?
+            """, (new_date, new_mood, new_energy, new_notes, id))
+            conn.commit()
+
+        flash("Journal updated successfully!", "success")
+        return redirect(url_for('journal'))
+
+    return render_template('edit_journal.html', journal=journal_entry)
+
+# ---------------------- REMINDER PAGE ----------------------
+@app.route("/reminder_page")
+def reminder_page():
+    return render_template("reminder.html")
+
+# ---------------------- REMINDERS API ----------------------
+@app.route("/reminders", methods=["GET"])
+def get_reminders():
+    # Ensure all reminders have completed field
+    for reminder in reminders:
+        if "completed" not in reminder:
+            reminder["completed"] = False
+    return jsonify(reminders), 200
+
+@app.route("/reminders", methods=["POST"])
+def add_reminder():
+    data = request.get_json()
+    required_fields = ["task", "category", "due"]
+
+    # check the field are complete
+    if all(field in data and data[field] for field in required_fields):
+        reminder = {
+            "task": data["task"].strip(),
+            "category": data["category"],
+            "due": data["due"],
+            "due_time": data.get("due_time", "09:00"),
+            "priority": data.get("priority", "medium"),
+            "completed": False,
+            "created_at": datetime.now().isoformat(),
+            "id": len(reminders)
+        }
+
+        # Save into in-memory list (keeps compatibility with existing frontend)
+        reminders.append(reminder)
+
+        # Persist into DB and schedule job
+        try:
+            with get_db_connection() as conn:
+                cur = conn.execute("""
+                    INSERT INTO reminders (task, category, due, due_time, priority, completed, created_at)
+                    VALUES (?, ?, ?, ?, ?, 0, ?)
+                """, (reminder["task"], reminder["category"], reminder["due"], reminder["due_time"], reminder["priority"], reminder["created_at"]))
+                conn.commit()
+                db_id = cur.lastrowid
+                # attach db id to in-memory reminder for future reference
+                reminder["db_id"] = db_id
+
+                # Schedule the job (if due datetime in future)
+                try:
+                    due_dt = datetime.strptime(f"{reminder['due']} {reminder['due_time']}", "%Y-%m-%d %H:%M")
+                    if due_dt > datetime.now():
+                        scheduler.add_job(func=lambda rid=db_id: send_scheduled_fcm(rid),
+                                          trigger="date",
+                                          run_date=due_dt,
+                                          id=f"reminder_{db_id}",
+                                          replace_existing=True)
+                        print(f"[add_reminder] scheduled reminder db_id={db_id} at {due_dt.isoformat()}")
+                    else:
+                        print(f"[add_reminder] due datetime {due_dt} is in the past; not scheduling job.")
+                except Exception as e:
+                    print("[add_reminder] scheduling error:", e)
+        except Exception as ex:
+            print("[add_reminder] DB insert error:", ex)
+
+        # Add to history
+        history_entry = {
+            "action": "created",
+            "reminder": reminder.copy(),
+            "timestamp": datetime.now().isoformat()
+        }
+        reminder_history.append(history_entry)
+
+        save_data()
+
+        # Don't send immediate FCM here; scheduling will handle send at due time.
+        return jsonify({
+            "message": "Reminder added successfully",
+            "reminders": reminders
+        }), 201
+    else:
+        return jsonify({
+            "error": "Data incomplete"
+            }), 400
+
+# Save device token (FCM) from frontend
+@app.route("/save_token", methods=["POST"])
+def save_token():
+    data = request.get_json()
+    token = data.get("token")
+    if not token:
+        return jsonify({"error": "No token provided"}), 400
+    try:
+        with get_db_connection() as conn:
+            conn.execute("INSERT OR IGNORE INTO device_tokens (token) VALUES (?)", (token,))
+            conn.commit()
+    except Exception as e:
+        print("[save_token] error:", e)
+        return jsonify({"error": "DB error"}), 500
+    return jsonify({"success": True}), 200
+
+# delete reminder
+@app.route("/reminders/<int:reminder_id>", methods=["DELETE"])
+def delete_reminder(reminder_id):
+    # Find the reminder by its id field
+    reminder_to_delete = next((r for r in reminders if r["id"] == reminder_id), None)
+
+    if reminder_to_delete:
+        reminders.remove(reminder_to_delete)
+
+        db_id = reminder_to_delete.get("db_id")
+        if db_id:
+            try:
+                with get_db_connection() as conn:
+                    conn.execute("DELETE FROM reminders WHERE id=?", (db_id,))
+                    conn.commit()
+                    # remove scheduled job if exists
+                    try:
+                        scheduler.remove_job(f"reminder_{db_id}")
+                    except Exception:
+                        pass
+            except Exception as e:
+                print("[delete_reminder] DB delete error:", e)
+
+        # Add to history
+        history_entry = {
+            "action": "deleted",
+            "reminder": reminder_to_delete,
+            "timestamp": datetime.now().isoformat()
+        }
+        reminder_history.append(history_entry)
+
+        save_data()
+        return jsonify({
+            "message": f"Reminder deleted: {reminder_to_delete['task']}",
+            "reminders": reminders
+        }), 200
+    else:
+        return jsonify({
+            "error": "Cannot find the reminder"
+        }), 404
+
+# get reminder history
+@app.route("/history", methods=["GET"])
+def get_history():
+    return jsonify(reminder_history), 200
+
+# check upcoming reminders for notifications
+@app.route("/upcoming", methods=["GET"])
+def get_upcoming():
+    upcoming = []
+    today = datetime.now().date()
+
+    for reminder in reminders:
+        due_date = datetime.strptime(reminder["due"], "%Y-%m-%d").date()
+        days_left = (due_date - today).days
+
+        if 0 <= days_left <= 3:  # Due within 3 days
+            upcoming.append({
+                **reminder,
+                "days_left": days_left,
+                "urgent": days_left == 0
+            })
+
+    return jsonify(upcoming), 200
+
+# Notes API endpoints
+@app.route("/notes", methods=["GET"])
+def get_notes():
+    return jsonify(notes), 200
+
+@app.route("/notes", methods=["POST"])
+def add_note():
+    data = request.get_json()
+    if data and "content" in data and data["content"].strip():
+        note = {
+            "content": data["content"].strip(),
+            "created_at": datetime.now().isoformat(),
+            "id": len(notes)
+        }
+        notes.append(note)
+        save_data()
+        return jsonify({
+            "message": "Note added successfully",
+            "notes": notes
+        }), 201
+    else:
+        return jsonify({
+            "error": "Note content is required"
+        }), 400
+
+@app.route("/notes/<int:index>", methods=["DELETE"])
+def delete_note(index):
+    if 0 <= index < len(notes):
+        deleted = notes.pop(index)
+        save_data()
+        return jsonify({
+            "message": f"Note deleted: {deleted['content']}",
+            "notes": notes
+        }), 200
+    else:
+        return jsonify({"error": "Note not found"}), 404 
+    
+    
+    # ---------------------- RUN APP ----------------------
 if __name__ == "__main__":
-    app.run(debug=True, use_reloader=False)
+    app.run(debug=True)
+
+
+# ---------------------- RUN APP ----------------------
+if __name__ == "__main__":
+    app.run(debug=True)
+
+
+@app.route("/reminders/<int:id>/complete", methods=["PUT"])
+def complete_reminder(id):
+    with get_db_connection() as conn:
+        cur = conn.cursor()
+        cur.execute("UPDATE reminders SET is_done = 1 WHERE id = ?", (id,))
+        if cur.rowcount == 0:
+            return jsonify({"error": "Reminder not found"}), 404
+        conn.commit()
+    return jsonify({"message": "Reminder marked completed"}), 200
